@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>jQuery UI Slider - Default functionality</title>
+    <link rel="stylesheet" href="//code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css">
+    <script src="/js/jquery-2.1.3.min.js"></script>
+    <script src="//code.jquery.com/ui/1.11.4/jquery-ui.js"></script>
+    <link rel="stylesheet" href="/resources/demos/style.css">
+
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
+
+    <script src="/js/vj-control-server.js"></script>
+    <script>
+    $(function() {
+        $( "#slider" ).slider({
+             change: function( event, ui ) {
+                setFanSpeed($( "#slider" ).slider( "value" ))
+             }
+        });
+    });
+    </script>
+</head>
+<body>
+    <div class="container">
+        <div id="slider"></div>
+    </div>
+
+
+    <script src="/js/bootstrap.min.js"></script>
+
+</body>
+</html>
