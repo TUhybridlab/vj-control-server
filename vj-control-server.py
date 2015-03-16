@@ -12,14 +12,18 @@ GPIO_FAN = 17
 PWM_FREQUENCY = 1000
 
 
-## Flask
+## REST API URLs
 BASE_URL="/"
 FAN_URL = BASE_URL + "fan/"
+
+
+## Instanciate Flask (Static files and REST API)
 app = Flask(__name__)
+## Instanciate SocketIO (Websockets, used for events) on top of it
 socketio = SocketIO(app)
 
 
-## Deliver index.html, css and js files
+## Deliver statc files (index.html, css, images and js files)
 @app.route(BASE_URL)
 def index():
 	return send_from_directory('static', 'index.html')
@@ -32,16 +36,13 @@ def static_css_proxy(path):
 def static_js_proxy(path):
 	return send_from_directory('static/js/', path)
 
-@app.route(BASE_URL + 'images/<path:path>')
-def static_img_proxy(path):
-	return send_from_directory('static/images/', path)
 
 ## REST API
 @app.route(FAN_URL + '<int:percent>', methods=['PUT'])
 def set_fan_speed(percent):
 	global duty_cycle
 
-	# Set servo on GPIO17 to 1000micros (1.0ms)
+	# Set PWM-DutyCycle of pin
 	led.ChangeDutyCycle(percent)
 	duty_cycle = percent
 	socketio.emit('fanEvent', {'data': 'Set fan speed to ' + str(percent)}, namespace="/events")
@@ -50,7 +51,6 @@ def set_fan_speed(percent):
 
 @app.route(FAN_URL, methods=['GET'])
 def get_fan_speed():
-	# Set servo on GPIO17 to 1000micros (1.0ms)
 	return jsonify({'speed': duty_cycle}), 200
 
 
@@ -61,7 +61,7 @@ def test_message(message):
 
 
 ## Init Raspberry GPIO
-def init_led():
+def init_pwm():
 	global led
 	global duty_cycle
 
@@ -72,12 +72,12 @@ def init_led():
 	duty_cycle = 0
 	led.start(duty_cycle)
 
-# Main - Start Flask server
+# Main - Start Flask server through SocketIO for websocket support
 if __name__ == '__main__':
 	# Set locale for Flask
 	locale.setlocale(locale.LC_ALL, '')
 
-	init_led()
+	init_pwm()
 
 	# Start Flask server
 	app.debug = True
