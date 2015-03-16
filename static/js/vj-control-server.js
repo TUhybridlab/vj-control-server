@@ -19,7 +19,7 @@ ajax = function(uri, method, request_data, is_async, success_callback, error_cal
 			success_callback(data);
 		},
 		error: function(jqXHR) {
-			default_error();
+			default_error(jqXHR);
 			error_callback();
 		}
 	};
