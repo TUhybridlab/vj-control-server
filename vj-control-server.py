@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+import sys
 import locale
 
 import RPi.GPIO as GPIO
@@ -86,7 +87,8 @@ if __name__ == '__main__':
 	init_pwm()
 
 	# Start Flask server
-	app.debug = True
+	if "debug" in sys.argv:
+		app.debug = True
 	socketio.run(app, host='0.0.0.0')
 
 	# Reset GPIO
