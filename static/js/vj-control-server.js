@@ -81,7 +81,8 @@ EventSocket = function(){
 
 	// Receive event from server
 	ret.on('serverEvent', function(msg) {
-		$('#log').append('<p>Received: ' + msg.data + '</p>');
+		time = new Date().timeNow();
+		$('#log').append('<p>'+ time + ': ' + msg.data + '</p>');
 	});
 
 	// Receive fan event from server
@@ -115,3 +116,8 @@ fanAPI = FanAPI();
 fanslider = FanSlider(fanAPI);
 eventSocket = EventSocket(fanAPI);
 eventPoster = EventPoster();
+
+// For the time now
+Date.prototype.timeNow = function () {
+	return ((this.getHours() < 10)?"0":"") + this.getHours() +":"+ ((this.getMinutes() < 10)?"0":"") + this.getMinutes() +":"+ ((this.getSeconds() < 10)?"0":"") + this.getSeconds();
+}
