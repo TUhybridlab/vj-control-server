@@ -1,0 +1,29 @@
+ REST API (Flask driven)
+=========================
+
+The API is a JSON based REST API with the following calls:
+
+GET /fan/ - returns current fan speed in percent
+	Parameter: None
+	Body: None
+	Returns: {speed: <int>}, e.g. {speed: 100} for full speed
+
+PUT /fan/<int:speed> - sets the fan speed as percentage
+	Parameter: speed: duty cycle percentage as integer , e.g. /fan/100 for full speed
+	Body: None
+	Returns: Nothing
+
+POST /events/
+	Parameter: None
+	Body: {data: <string>}. data may be a JSON of its own or just plain text
+	Returns: Nothing
+
+
+ Events
+========
+
+Events are distributed from server to client using SocketIO. The socket can be requested at <host>:<port>/events.
+
+EventTypes:
+	serverEvent: Generic message from server to clients. Broadcasted.
+	fanEvent: Something changed with the fan. Broadcasted.
