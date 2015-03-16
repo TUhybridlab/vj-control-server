@@ -5,6 +5,7 @@ import locale
 import RPi.GPIO as GPIO
 
 from flask import Flask, send_from_directory, jsonify
+from flask.ext.socketio import SocketIO, emit
 
 ## Parameters
 GPIO_FAN = 17
@@ -15,6 +16,7 @@ PWM_FREQUENCY = 1000
 BASE_URL="/"
 FAN_URL = BASE_URL + "fan/"
 app = Flask(__name__)
+socketio = SocketIO(app)
 
 
 ## Deliver index.html, css and js files
@@ -42,12 +44,20 @@ def set_fan_speed(percent):
 	# Set servo on GPIO17 to 1000micros (1.0ms)
 	led.ChangeDutyCycle(percent)
 	duty_cycle = percent
+	socketio.emit('fanEvent', {'data': 'Set fan speed to ' + str(percent)}, namespace="/events")
+
 	return jsonify({'error': 0}), 200
 
 @app.route(FAN_URL, methods=['GET'])
 def get_fan_speed():
 	# Set servo on GPIO17 to 1000micros (1.0ms)
 	return jsonify({'speed': duty_cycle}), 200
+
+
+## Events
+@socketio.on('webEvent', namespace='/events')
+def test_message(message):
+	emit('serverEvent', {'data': message['data']}, broadcast=True)
 
 
 ## Init Raspberry GPIO
@@ -70,7 +80,8 @@ if __name__ == '__main__':
 	init_led()
 
 	# Start Flask server
-	app.run(host='0.0.0.0')
+	app.debug = True
+	socketio.run(app, host='0.0.0.0')
 
 	# Reset GPIO
 	led.stop()
