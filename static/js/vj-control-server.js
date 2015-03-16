@@ -1,3 +1,7 @@
+FAN_URL="/fan/"
+EVENT_URL="/events/"
+
+
 do_nothing = function() {}
 
 default_error = function (jqXHR) {
@@ -34,11 +38,11 @@ FanAPI = function() {
 	var self = this;
 
 	self.setFanSpeed = function(speed_percentage) {
-		ajax("/fan/" + speed_percentage, "PUT", null, true, do_nothing, do_nothing);
+		ajax(FAN_URL + speed_percentage, "PUT", null, true, do_nothing, do_nothing);
 	}
 
 	self.getFanSpeed = function() {
-		ajax("/fan/", "GET", null, false, do_nothing, do_nothing).done(function(data) { self.setSlider(data); });
+		ajax(FAN_URL, "GET", null, false, do_nothing, do_nothing).done(function(data) { self.setSlider(data); });
 	}
 
 	return self;
@@ -49,7 +53,7 @@ FanSlider = function(fanAPI) {
 	self.onChangeCallbackEnabled = true;
 
 	self.initSlider = function () {
-		ajax("/fan/", "GET", null, false, do_nothing, do_nothing).done(function(data) {
+		ajax(FAN_URL, "GET", null, false, do_nothing, do_nothing).done(function(data) {
 			// Initilaize slider with value
 			$( "#slider" ).slider({
 				value: data.speed
