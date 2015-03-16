@@ -1,4 +1,5 @@
 do_nothing = function() {}
+
 default_error = function (jqXHR) {
 			console.log("ajax error " + jqXHR.status);
 			serverDown = true;
@@ -29,9 +30,23 @@ ajax = function(uri, method, request_data, is_async, success_callback, error_cal
 	return $.ajax(request);
 }
 
-FanSlider = function() {
+FanAPI = function() {
 	var self = this;
-	var self.onChangeCallbackEnabled = true;
+
+	self.setFanSpeed = function(speed_percentage) {
+		ajax("/fan/" + speed_percentage, "PUT", null, true, do_nothing, do_nothing);
+	}
+
+	self.getFanSpeed = function() {
+		ajax("/fan/", "GET", null, false, do_nothing, do_nothing).done(function(data) { self.setSlider(data); });
+	}
+
+	return self;
+}
+
+FanSlider = function(fanAPI) {
+	var self = this;
+	self.onChangeCallbackEnabled = true;
 
 	self.initSlider = function () {
 		ajax("/fan/", "GET", null, false, do_nothing, do_nothing).done(function(data) {
@@ -42,27 +57,47 @@ FanSlider = function() {
 
 			// Set speed with slider
 			$( "#slider" ).on( "slidechange", function( event, ui ) {
-				if (onChangeCallbackEnabled)
-					setFanSpeed($( "#slider" ).slider( "value" ));
+				if (self.onChangeCallbackEnabled)
+					fanAPI.setFanSpeed($( "#slider" ).slider( "value" ));
 			});
 		});
 	}
 
 	self.setSlider = function(data) {
 		console.log("setting slider to " + data.speed);
-		onChangeCallbackEnabled = false;
+		self.onChangeCallbackEnabled = false;
 		$( "#slider" ).slider( "option", "value", data.speed);
-		onChangeCallbackEnabled = true;
+		self.onChangeCallbackEnabled = true;
 	}
 
-	self.setFanSpeed = function(speed_percentage) {
-		ajax("/fan/" + speed_percentage, "PUT", null, true, do_nothing, do_nothing);
-	}
 
-	getFanSpeed = function() {
-		ajax("/fan/", "GET", null, false, do_nothing, do_nothing).done(function(data) { FanSlider.setSlider(data); });
-	}
+	self.initSlider();
 
+	return self;
 }
 
-FanSlider.initSlider();
+EventSocket = function(){
+	var ret = io.connect('http://' + document.domain + ':' + location.port + '/events');
+
+	// Receive event from server
+	ret.on('serverEvent', function(msg) {
+		$('#log').append('<p>Received: ' + msg.data + '</p>');
+	});
+
+	// Receive fan event from server
+	ret.on('fanEvent', function(msg) {
+		fanAPI.getFanSpeed();
+	});
+
+	ret.sendEvent = function() {
+		// Send event to server
+		ret.emit('webEvent', {data: $('#emit_data').val()});
+		return false;
+	}
+
+	return ret;
+}
+
+fanAPI = FanAPI();
+fanslider = FanSlider(fanAPI);
+eventSocket = EventSocket(fanAPI);
