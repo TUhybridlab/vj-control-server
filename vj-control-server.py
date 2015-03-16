@@ -4,7 +4,7 @@ import locale
 
 import RPi.GPIO as GPIO
 
-from flask import Flask, send_from_directory, jsonify
+from flask import Flask, send_from_directory, jsonify, request
 from flask.ext.socketio import SocketIO, emit
 
 ## Parameters
@@ -15,6 +15,7 @@ PWM_FREQUENCY = 1000
 ## REST API URLs
 BASE_URL="/"
 FAN_URL = BASE_URL + "fan/"
+EVENT_URL = BASE_URL + "events/"
 
 
 ## Instanciate Flask (Static files and REST API)
@@ -53,6 +54,11 @@ def set_fan_speed(percent):
 def get_fan_speed():
 	return jsonify({'speed': duty_cycle}), 200
 
+@app.route(EVENT_URL, methods=['POST'])
+def broadcast_event():
+	socketio.emit('serverEvent', {'data': request.json['data']}, namespace="/events")
+
+	return jsonify({'error': 0}), 201
 
 ## Events
 @socketio.on('webEvent', namespace='/events')
