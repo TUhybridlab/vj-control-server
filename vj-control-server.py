@@ -8,6 +8,7 @@ import RPi.GPIO as GPIO
 from flask import Flask, send_from_directory, jsonify, request
 from flask.ext.socketio import SocketIO, emit
 
+
 ## Parameters
 GPIO_FAN = 17
 PWM_FREQUENCY = 1000
@@ -61,7 +62,9 @@ def broadcast_event():
 
 	return jsonify({'error': 0}), 201
 
+
 ## Events
+## DEPRECATED - Events are broadcasted as they come in on POST requests
 @socketio.on('webEvent', namespace='/events')
 def test_message(message):
 	emit('serverEvent', {'data': message['data']}, broadcast=True)
@@ -86,9 +89,11 @@ if __name__ == '__main__':
 
 	init_pwm()
 
-	# Start Flask server
+	# Set debug option if desired
 	if "debug" in sys.argv:
 		app.debug = True
+
+	# Blocking! - Start Flask server
 	socketio.run(app, host='0.0.0.0')
 
 	# Reset GPIO
