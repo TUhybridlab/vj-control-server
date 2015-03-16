@@ -16,10 +16,6 @@ BASE_URL="/"
 FAN_URL = BASE_URL + "fan/"
 app = Flask(__name__)
 
-## Init Raspberry GPIO
-GPIO.setmode(GPIO.BCM)
-GPIO.setup(GPIO_FAN, GPIO.OUT)
-led = GPIO.PWM(GPIO_FAN, PWM_FREQUENCY)
 
 ## Deliver index.html, css and js files
 @app.route(BASE_URL)
@@ -41,13 +37,30 @@ def static_img_proxy(path):
 ## REST API
 @app.route(FAN_URL + '<int:percent>', methods=['PUT'])
 def set_fan_speed(percent):
+	global duty_cycle
+
 	# Set servo on GPIO17 to 1000micros (1.0ms)
 	led.ChangeDutyCycle(percent)
+	duty_cycle = percent
 	return jsonify({'error': 0}), 200
 
+@app.route(FAN_URL, methods=['GET'])
+def get_fan_speed():
+	# Set servo on GPIO17 to 1000micros (1.0ms)
+	return jsonify({'speed': duty_cycle}), 200
+
+
+## Init Raspberry GPIO
 def init_led():
+	global led
+	global duty_cycle
+
 	# Setup PWM for fan control
-	led.start(0)
+	GPIO.setmode(GPIO.BCM)
+	GPIO.setup(GPIO_FAN, GPIO.OUT)
+	led = GPIO.PWM(GPIO_FAN, PWM_FREQUENCY)
+	duty_cycle = 0
+	led.start(duty_cycle)
 
 # Main - Start Flask server
 if __name__ == '__main__':
