@@ -4,7 +4,7 @@ import locale
 
 import RPi.GPIO as GPIO
 
-from flask import Flask, send_from_directory
+from flask import Flask, send_from_directory, jsonify
 
 ## Parameters
 GPIO_FAN = 17
