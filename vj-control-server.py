@@ -76,7 +76,7 @@ def init_pwm():
 	GPIO.setmode(GPIO.BCM)
 	GPIO.setup(GPIO_FAN, GPIO.OUT)
 	led = GPIO.PWM(GPIO_FAN, PWM_FREQUENCY)
-	duty_cycle = 0
+	duty_cycle = 50
 	led.start(duty_cycle)
 
 # Main - Start Flask server through SocketIO for websocket support
