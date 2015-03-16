@@ -9,7 +9,7 @@ default_error = function (jqXHR) {
 			serverDown = true;
 }
 
-ajax = function(uri, method, request_data, is_async, success_callback, error_callback) {
+ajax_json = function(uri, method, request_data, is_async, success_callback, error_callback) {
 	var request = {
 		url: uri,
 		type: method,
@@ -38,11 +38,11 @@ FanAPI = function() {
 	var self = this;
 
 	self.setFanSpeed = function(speed_percentage) {
-		ajax(FAN_URL + speed_percentage, "PUT", null, true, do_nothing, do_nothing);
+		ajax_json(FAN_URL + speed_percentage, "PUT", null, true, do_nothing, do_nothing);
 	}
 
 	self.getFanSpeed = function() {
-		ajax(FAN_URL, "GET", null, false, do_nothing, do_nothing).done(function(data) { self.setSlider(data); });
+		ajax_json(FAN_URL, "GET", null, false, do_nothing, do_nothing).done(function(data) { self.setSlider(data); });
 	}
 
 	return self;
@@ -53,7 +53,7 @@ FanSlider = function(fanAPI) {
 	self.onChangeCallbackEnabled = true;
 
 	self.initSlider = function () {
-		ajax(FAN_URL, "GET", null, false, do_nothing, do_nothing).done(function(data) {
+		ajax_json(FAN_URL, "GET", null, false, do_nothing, do_nothing).done(function(data) {
 			// Initilaize slider with value
 			$( "#slider" ).slider({
 				value: data.speed
@@ -108,7 +108,7 @@ EventPoster = function() {
 
 	self.sendEvent = function() {
 		data = {data: $('#emit_data').val()}
-		ajax("/events/", "POST", data, false, do_nothing, do_nothing);
+		ajax_json(EVENT_URL, "POST", data, false, do_nothing, do_nothing);
 
 		return false;
 	}
