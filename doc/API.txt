@@ -13,6 +13,11 @@ PUT /fan/<int:speed> - sets the fan speed as percentage
 	Body: None
 	Returns: Nothing
 
+POST /fan/ - sets the fan speed as percentage
+	Parameter: speed: duty cycle percentage as integer , e.g. /fan/100 for full speed
+	Body: None
+	Returns: Nothing
+
 POST /events/
 	Parameter: None
 	Body: {data: <string>}. data may be a JSON of its own or just plain text

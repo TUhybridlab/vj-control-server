@@ -41,14 +41,27 @@ def static_js_proxy(path):
 
 
 ## REST API
-@app.route(FAN_URL + '<int:percent>', methods=['PUT'])
+@app.route(FAN_URL + '<int:percent>', methods=['PUT', 'GET'])
 def set_fan_speed(percent):
 	global duty_cycle
 
 	# Set PWM-DutyCycle of pin
-	led.ChangeDutyCycle(percent)
 	duty_cycle = percent
-	socketio.emit('fanEvent', {'data': 'Set fan speed to ' + str(percent)}, namespace="/events")
+	led.ChangeDutyCycle(duty_cycle)
+	socketio.emit('fanEvent', {'data': 'Set fan speed (PUT) to ' + str(duty_cycle)}, namespace="/events")
+
+	return jsonify({'error': 0}), 200
+
+@app.route(FAN_URL, methods=['POST'])
+def set_fan_speed_post():
+	global duty_cycle
+
+	# Set PWM-DutyCycle of pin
+	print str(request.form)
+	print str(request.form['speed'])
+	duty_cycle = request.form['speed']
+	led.ChangeDutyCycle(int(duty_cycle))
+	socketio.emit('fanEvent', {'data': 'Set fan speed (POST) to ' + str(duty_cycle)}, namespace="/events")
 
 	return jsonify({'error': 0}), 200
 
