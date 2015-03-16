@@ -20,7 +20,7 @@ ajax = function(uri, method, data, is_async, sucess, error) {
 }
 
 setFanSpeed = function(speed_percentage) {
-	ajax("/fan/" + speed_percentage, "GET", "", true, setFanSpeed_success, default_error);
+	ajax("/fan/" + speed_percentage, "PUT", null, true, setFanSpeed_success, default_error);
 }
 
 setFanSpeed_success = function() {

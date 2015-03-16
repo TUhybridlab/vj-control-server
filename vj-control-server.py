@@ -39,7 +39,7 @@ def static_img_proxy(path):
 	return send_from_directory('static/images/', path)
 
 ## REST API
-@app.route(FAN_URL + '<int:percent>', methods=['GET'])
+@app.route(FAN_URL + '<int:percent>', methods=['PUT'])
 def set_fan_speed(percent):
 	# Set servo on GPIO17 to 1000micros (1.0ms)
 	led.ChangeDutyCycle(percent)
