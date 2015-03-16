@@ -43,7 +43,7 @@ def static_img_proxy(path):
 def set_fan_speed(percent):
 	# Set servo on GPIO17 to 1000micros (1.0ms)
 	led.ChangeDutyCycle(percent)
-	return "OK", 200
+	return jsonify({'error': 0}), 200
 
 def init_led():
 	# Setup PWM for fan control
