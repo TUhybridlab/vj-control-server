@@ -98,6 +98,20 @@ EventSocket = function(){
 	return ret;
 }
 
+EventPoster = function() {
+	var self = this;
+
+	self.sendEvent = function() {
+		data = {data: $('#emit_data').val()}
+		ajax("/events/", "POST", data, false, do_nothing, do_nothing);
+
+		return false;
+	}
+
+	return self;
+}
+
 fanAPI = FanAPI();
 fanslider = FanSlider(fanAPI);
 eventSocket = EventSocket(fanAPI);
+eventPoster = EventPoster();
