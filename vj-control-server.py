@@ -41,27 +41,15 @@ def static_js_proxy(path):
 
 
 ## REST API
-@app.route(FAN_URL + '<int:percent>', methods=['PUT', 'GET'])
-def set_fan_speed(percent):
-	global duty_cycle
-
-	# Set PWM-DutyCycle of pin
-	duty_cycle = percent
-	led.ChangeDutyCycle(duty_cycle)
-	socketio.emit('fanEvent', {'data': 'Set fan speed (PUT) to ' + str(duty_cycle)}, namespace="/events")
+@app.route(FAN_URL + '<int:speed>', methods=['PUT', 'GET'])
+def set_fan_speed(speed):
+	set_fanspeed(speed)
 
 	return jsonify({'error': 0}), 200
 
 @app.route(FAN_URL, methods=['POST'])
 def set_fan_speed_post():
-	global duty_cycle
-
-	# Set PWM-DutyCycle of pin
-	print str(request.form)
-	print str(request.form['speed'])
-	duty_cycle = request.form['speed']
-	led.ChangeDutyCycle(int(duty_cycle))
-	socketio.emit('fanEvent', {'data': 'Set fan speed (POST) to ' + str(duty_cycle)}, namespace="/events")
+	set_fanspeed(request.form['speed'])
 
 	return jsonify({'error': 0}), 200
 
@@ -94,6 +82,18 @@ def init_pwm():
 	led = GPIO.PWM(GPIO_FAN, PWM_FREQUENCY)
 	duty_cycle = 50
 	led.start(duty_cycle)
+
+## Setter for fan speed
+def set_fanspeed(speed):
+	global duty_cycle
+
+	# Set PWM-DutyCycle of pin
+	duty_cycle = duty_cycle = min(max(speed, 0), 100)
+	led.ChangeDutyCycle(int(duty_cycle))
+
+	# TODO Remove when working
+	socketio.emit('serverEvent', {'data': 'Set fan speed to ' + str(duty_cycle)}, namespace="/events")
+
 
 # Main - Start Flask server through SocketIO for websocket support
 if __name__ == '__main__':
