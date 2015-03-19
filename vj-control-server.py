@@ -11,8 +11,13 @@ from flask.ext.socketio import SocketIO, emit
 
 ## Parameters
 GPIO_FAN = 17
+GPIO_PARACHUTE = 22
+GPIO_WATERSPLASHER = 24
+
 PWM_FREQUENCY = 1000
 
+GPIO_BUTTON_START = 23
+GPIO_BUTTON_READY = 24
 
 ## REST API URLs
 BASE_URL="/"
@@ -68,6 +73,42 @@ def broadcast_event():
 
 
 ## Events
+
+@socketio.on('unityReadyEvent', namespace='/events')
+def unity_ready(message):
+	emit('serverEvent', {'data': message}, broadcast=True)
+
+@socketio.on('unityParachuteEvent', namespace='/events')
+def unity_parachute(message):
+	GPIO.output(GPIO_PARACHUTE, True)
+	emit('serverEvent', {'data': message}, broadcast=True)
+
+@socketio.on('unityLandingEvent', namespace='/events')
+def unity_landing(message):
+	emit('serverEvent', {'data': message}, broadcast=True)
+
+@socketio.on('unityFanSpeedEvent', namespace='/events')
+def unity_fanspeed(message):
+	set_fanspeed(int(message))
+
+@socketio.on('unityWaterSplasherOnEvent', namespace='/events')
+def unity_watersplasher_on(message):
+	GPIO.output(GPIO_WATERSPLASHER, True)
+	emit('serverEvent', {'data': message}, broadcast=True)
+
+@socketio.on('unityWaterSplasherOnEvent', namespace='/events')
+def unity_watersplasher_off(message):
+	GPIO.output(GPIO_WATERSPLASHER, False)
+	emit('serverEvent', {'data': message}, broadcast=True)
+
+
+## RasPi GPIO callbacks
+def ready_button_event_handler(pin):
+	socketio.emit('raspiPlayerReadyEvent', 'Player is ready to go', namespace="/events")
+
+def start_button_event_handler(pin):
+	socketio.emit('raspiStartJumpEvent', 'Jump Started', namespace="/events")
+	socketio.emit('serverEvent', {'data': 'Jump Started'}, namespace="/events")
 ## DEPRECATED - Events are broadcasted as they come in on POST requests
 @socketio.on('webEvent', namespace='/events')
 def test_message(message):
@@ -79,12 +120,35 @@ def init_pwm():
 	global led
 	global duty_cycle
 
-	# Setup PWM for fan control
 	GPIO.setmode(GPIO.BCM)
+
+	# Setup PWM for fan control
 	GPIO.setup(GPIO_FAN, GPIO.OUT)
+
+	# Setup button for start detection
+	GPIO.setup(GPIO_BUTTON_START, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+	GPIO.add_event_detect(GPIO_BUTTON_START, GPIO.FALLING)
+	GPIO.add_event_callback(GPIO_BUTTON_START, start_button_event_handler)
+
+	# Setup button for ready-state detection
+	GPIO.setup(GPIO_BUTTON_READY, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+	GPIO.add_event_detect(GPIO_BUTTON_READY, GPIO.FALLING)
+	GPIO.add_event_callback(GPIO_BUTTON_READY, ready_button_event_handler)
+
+	# Setup output for parachute
+	GPIO.setup(GPIO_PARACHUTE, GPIO.OUT)
+
+	# Setup output for water splasher
+	GPIO.setup(GPIO_WATERSPLASHER, GPIO.OUT)
+
+    # Init LED
 	led = GPIO.PWM(GPIO_FAN, PWM_FREQUENCY)
 	duty_cycle = 50
 	led.start(duty_cycle)
+
+	# Init parachute and watersplasher
+	GPIO.output(GPIO_PARACHUTE, False)
+	GPIO.output(GPIO_WATERSPLASHER, False)
 
 ## Setter for fan speed
 def set_fanspeed(speed):
