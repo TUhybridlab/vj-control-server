@@ -9,6 +9,11 @@ default_error = function (jqXHR) {
 			serverDown = true;
 }
 
+log = function(msg) {
+	time = new Date().timeNow();
+	$('#log').append('<p>'+ time + ' - '+ msg + '</p>');
+}
+
 ajax_json = function(uri, method, request_data, is_async, success_callback, error_callback) {
 	var request = {
 		url: uri,
