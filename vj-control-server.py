@@ -109,10 +109,6 @@ def ready_button_event_handler(pin):
 def start_button_event_handler(pin):
 	socketio.emit('raspiStartJumpEvent', 'Jump Started', namespace="/events")
 	socketio.emit('serverEvent', {'data': 'Jump Started'}, namespace="/events")
-## DEPRECATED - Events are broadcasted as they come in on POST requests
-@socketio.on('webEvent', namespace='/events')
-def test_message(message):
-	emit('serverEvent', {'data': message['data']}, broadcast=True)
 
 
 ## Init Raspberry GPIO

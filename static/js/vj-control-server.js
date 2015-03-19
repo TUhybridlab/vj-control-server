@@ -88,43 +88,24 @@ FanSlider = function(fanAPI) {
 EventSocket = function(){
 	var ret = io.connect('http://' + document.domain + ':' + location.port + '/events');
 
-	// Receive event from server
-	ret.on('serverEvent', function(msg) {
-		time = new Date().timeNow();
-		$('#log').append('<p>'+ time + ': ' + msg.data + '</p>');
-	});
 
 	// Receive fan event from server
 	ret.on('fanEvent', function(msg) {
 		fanAPI.getFanSpeed();
 	});
 
-	ret.sendEvent = function() {
-		// Send event to server
-		ret.emit('webEvent', {data: $('#emit_data').val()});
-		return false;
-	}
 
 	return ret;
 }
 
-EventPoster = function() {
-	var self = this;
 
-	self.sendEvent = function() {
-		data = {data: $('#emit_data').val()}
-		ajax_json(EVENT_URL, "POST", data, false, do_nothing, do_nothing);
 
-		return false;
-	}
 
-	return self;
 }
 
 fanAPI = FanAPI();
 fanslider = FanSlider(fanAPI);
 eventSocket = EventSocket(fanAPI);
-eventPoster = EventPoster();
 
 // For the time now
 Date.prototype.timeNow = function () {

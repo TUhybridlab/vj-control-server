@@ -6,7 +6,6 @@
 
     <link rel="stylesheet" href="/css/bootstrap.min.css">
     <link rel="stylesheet" href="/css/jquery-ui.min.css">
-    <link rel="stylesheet" href="/css/jqClock.css">
 
     <script type="text/javascript" src="/js/jquery-2.1.3.min.js"></script>
     <script type="text/javascript" src="/js/jquery-ui.min.js"></script>
@@ -16,25 +15,22 @@
 </head>
 <body>
     <div class="container">
-        <h1> VJ Control Panel</h1>
-        <h3>Fan speed</h3>
-        <div id="slider"></div>
+        <h2> VJ Control Panel</h2>
 
-        <h3>Event log</h3>
-        <div id="log"></div>
-        <div id="clock"></div>
-        <script type="text/javascript"> $("div#clock").clock({"calendar": "false", "format": "24"}); </script>
 
-        <h3>[Debug] Send event</h3>
-        <form id="emit" method="POST" action='#' onsubmit="return eventPoster.sendEvent()">
-            <input type="text" name="emit_data" id="emit_data" placeholder="Message">
-            <input type="submit" value="Echo">
-        </form>
+        <div class="row">
+            <h3>Environment</h3>
+            <div class="col-sm-4 col-lg-4">
+                <h4>Fan speed</h4>
+                <div id="slider"></div>
+            </div>
+
+        </div>
 
     </div>
 
-    <script src="/js/vj-control-server.js"></script>
-    <script src="/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="/js/vj-control-server.js"></script>
+    <script type="text/javascript" src="/js/bootstrap.min.js"></script>
 
 </body>
 </html>
