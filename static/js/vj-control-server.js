@@ -89,17 +89,55 @@ EventSocket = function(){
 
 
 	// Receive fan event from server
-	ret.on('fanEvent', function(msg) {
+	ret.on('raspiFanEvent', function(msg) {
 		fanSlider.setSlider(msg);
+		log('[DEBUG] Set fan slider to ' + msg);
 	});
 
+	// Watersplasher switched on
+	ret.on('raspiWaterSplasherOnEvent', function(msg) {
+		log('[DEBUG] Watersplasher: On');
+		watersplasherSwitch.bootstrapSwitch('state', true, true);
+	});
+
+	// Watersplasher switched off
+	ret.on('raspiWaterSplasherOffEvent', function(msg) {
+		log('[DEBUG] Watersplasher: Off');
+		watersplasherSwitch.bootstrapSwitch('state', false, true);
+	});
+
+	// Parachute opened
+	ret.on('raspiParachuteOpenEvent', function(msg) {
+		log('[DEBUG] Parachute opened');
+		parachuteSwitch.bootstrapSwitch('state', true, true);
+	});
+
+	// Parachute closed
+	ret.on('raspiParachuteCloseEvent', function(msg) {
+		log('[DEBUG] Parachute closed');
+		parachuteSwitch.bootstrapSwitch('state', false, true);
+	});
+
+	// Ready to jump
+	ret.on('raspiUnityReadyEvent', function(msg) {
+		log('[DEBUG] Unity is ready');
+		readyStateSwitch.bootstrapSwitch('state', true, true);
+	});
+
+	// Start jump
+	ret.on('raspiJumpStartedEvent', function(msg) {
+		log('[DEBUG] Player jumped');
+		jumpStateSwitch.bootstrapSwitch('state', true, true);
+		readyStateSwitch.bootstrapSwitch('state', false, true);
+	});
+
+	// Landing
+	ret.on('raspiLandingEvent', function(msg) {
+		log('[DEBUG] Player landed');
+		jumpStateSwitch.bootstrapSwitch('state', false, true);
+	});
 
 	return ret;
-}
-
-
-
-
 }
 
 fanAPI = FanAPI();

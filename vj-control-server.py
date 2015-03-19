@@ -73,18 +73,28 @@ def broadcast_event():
 
 
 ## Events
-
+# Section of the Jump
 @socketio.on('unityReadyEvent', namespace='/events')
 def unity_ready(message):
-	emit('serverEvent', {'data': message}, broadcast=True)
+	emit('raspiUnityReadyEvent', {'data': message}, broadcast=True)
 
-@socketio.on('unityParachuteEvent', namespace='/events')
+@socketio.on('unityJumpStartedEvent', namespace='/events')
+def unity_ready(message):
+	emit('raspiJumpStartedEvent', {'data': message}, broadcast=True)
+
+@socketio.on('unityParachuteOpenEvent', namespace='/events')
 def unity_parachute(message):
 	open_parachute()
 
 @socketio.on('unityLandingEvent', namespace='/events')
 def unity_landing(message):
-	emit('serverEvent', {'data': message}, broadcast=True)
+	emit('raspiLandingEvent', {'data': message}, broadcast=True)
+
+@socketio.on('unityResetLevel', namespace='/events')
+def unity_reset(message):
+	close_parachute()
+	set_fanspeed(0)
+	watersplasher_off()
 
 # Enivronment control
 @socketio.on('unityFanSpeedEvent', namespace='/events')
@@ -95,7 +105,7 @@ def unity_fanspeed(message):
 def unity_watersplasher_on(message):
 	watersplasher_on()
 
-@socketio.on('unityWaterSplasherOnEvent', namespace='/events')
+@socketio.on('unityWaterSplasherOffEvent', namespace='/events')
 def unity_watersplasher_off(message):
 	watersplasher_off()
 
@@ -145,12 +155,16 @@ def set_fanspeed(speed):
 	led.ChangeDutyCycle(int(duty_cycle))
 
 	# TODO Remove when working
-	socketio.emit('serverEvent', {'data': 'Set fan speed to ' + str(duty_cycle)}, namespace="/events")
+	socketio.emit('raspiFanEvent', speed, namespace="/events")
 
 # Setter for parachute state
 def open_parachute():
 	GPIO.output(GPIO_PARACHUTE, GPIO.HIGH)
 	emit('raspiParachuteOpenEvent', None, broadcast=True)
+
+def close_parachute():
+	GPIO.output(GPIO_PARACHUTE, GPIO.LOW)
+	emit('raspiParachuteCloseEvent', None, broadcast=True)
 
 # Setter for Watersplasher
 def watersplasher_on():

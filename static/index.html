@@ -5,6 +5,7 @@
     <title>..:: VJ COntrol Panel ::..</title>
 
     <link rel="stylesheet" href="/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/css/bootstrap-switch.css">
     <link rel="stylesheet" href="/css/jquery-ui.min.css">
 
     <script type="text/javascript" src="/js/jquery-2.1.3.min.js"></script>
@@ -17,7 +18,23 @@
     <div class="container">
         <h2> VJ Control Panel</h2>
 
+        <div class="row">
+            <h3>Jump sections</h3>
+            <div class="col-sm-4 col-lg-4">
+                <h4>Ready to Jump</h4>
+                <input id="ready-state" checked="" type="checkbox" data-on-text="Yes" data-off-text="No">
+            </div>
 
+            <div class="col-sm-4 col-lg-4">
+                <h4>Jump</h4>
+                <input id="jump-state" checked="" type="checkbox" data-on-text="Started" data-off-text="Ended">
+            </div>
+
+            <div class="col-sm-4 col-lg-4">
+                <h4>Parachute</h4>
+                <input id="parachute-state" checked="" type="checkbox" data-on-text="Open" data-off-text="Closed">
+            </div>
+        </div>
         <div class="row">
             <h3>Environment</h3>
             <div class="col-sm-4 col-lg-4">
@@ -25,12 +42,52 @@
                 <div id="slider"></div>
             </div>
 
+            <div class="col-sm-4 col-lg-4">
+                <h4>Watersplasher</h4>
+                <input id="watersplasher-state" checked="" type="checkbox" data-on-text="On" data-off-text="Off">
+            </div>
+        </div>
+
+        <div class="row">
+            <h3>Event log</h3>
+            <div id="log"></div>
+            <div id="clock"></div>
+            <script type="text/javascript"> $("div#clock").clock({"calendar": "false", "format": "24"}); </script>
         </div>
 
     </div>
 
     <script type="text/javascript" src="/js/vj-control-server.js"></script>
     <script type="text/javascript" src="/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="/js/bootstrap-switch.js"></script>
+
+    <script type="text/javascript">
+        var parachuteSwitch = $('input#parachute-state');
+        parachuteSwitch.bootstrapSwitch('state', false, true);
+        parachuteSwitch.on('switchChange.bootstrapSwitch', function(event, state) {
+            if (state)
+                eventSocket.emit('unityParachuteOpenEvent', '[DEBUG] Open parachute');
+            else
+                eventSocket.emit('unityResetLevel', '[DEBUG] Reset level');
+        });
+
+        var watersplasherSwitch = $('input#watersplasher-state');
+        watersplasherSwitch.bootstrapSwitch('state', false, true);
+        watersplasherSwitch.on('switchChange.bootstrapSwitch', function(event, state) {
+            if (state)
+                eventSocket.emit('unityWaterSplasherOnEvent', '[DEBUG] Switch on Watersplasher');
+            else
+                eventSocket.emit('unityWaterSplasherOffEvent', '[DEBUG] Switch off Watersplasher');
+        });
+
+        var jumpStateSwitch = $('input#jump-state');
+        jumpStateSwitch.bootstrapSwitch('readonly', true);
+        jumpStateSwitch.bootstrapSwitch('state', false, true);
+
+        var readyStateSwitch = $('input#ready-state');
+        readyStateSwitch.bootstrapSwitch('readonly', true);
+        readyStateSwitch.bootstrapSwitch('state', false, true);
+    </script>
 
 </body>
 </html>
