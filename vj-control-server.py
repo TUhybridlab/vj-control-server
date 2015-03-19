@@ -11,8 +11,8 @@ from flask.ext.socketio import SocketIO, emit
 
 ## Parameters
 GPIO_FAN = 17
-GPIO_PARACHUTE = 22
-GPIO_WATERSPLASHER = 24
+GPIO_PARACHUTE = 27
+GPIO_WATERSPLASHER = 22
 
 PWM_FREQUENCY = 1000
 
