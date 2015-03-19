@@ -80,39 +80,29 @@ def unity_ready(message):
 
 @socketio.on('unityParachuteEvent', namespace='/events')
 def unity_parachute(message):
-	GPIO.output(GPIO_PARACHUTE, True)
-	emit('serverEvent', {'data': message}, broadcast=True)
+	open_parachute()
 
 @socketio.on('unityLandingEvent', namespace='/events')
 def unity_landing(message):
 	emit('serverEvent', {'data': message}, broadcast=True)
 
+# Enivronment control
 @socketio.on('unityFanSpeedEvent', namespace='/events')
 def unity_fanspeed(message):
 	set_fanspeed(int(message))
 
 @socketio.on('unityWaterSplasherOnEvent', namespace='/events')
 def unity_watersplasher_on(message):
-	GPIO.output(GPIO_WATERSPLASHER, True)
-	emit('serverEvent', {'data': message}, broadcast=True)
+	watersplasher_on()
 
 @socketio.on('unityWaterSplasherOnEvent', namespace='/events')
 def unity_watersplasher_off(message):
-	GPIO.output(GPIO_WATERSPLASHER, False)
-	emit('serverEvent', {'data': message}, broadcast=True)
+	watersplasher_off()
 
 
-## RasPi GPIO callbacks
-def ready_button_event_handler(pin):
-	socketio.emit('raspiPlayerReadyEvent', 'Player is ready to go', namespace="/events")
-
-def start_button_event_handler(pin):
-	socketio.emit('raspiStartJumpEvent', 'Jump Started', namespace="/events")
-	socketio.emit('serverEvent', {'data': 'Jump Started'}, namespace="/events")
-
-
-## Init Raspberry GPIO
-def init_pwm():
+## Raspberry GPIO
+# Init
+def init_gpio():
 	global led
 	global duty_cycle
 
@@ -139,14 +129,14 @@ def init_pwm():
 
     # Init LED
 	led = GPIO.PWM(GPIO_FAN, PWM_FREQUENCY)
-	duty_cycle = 50
+	duty_cycle = 0
 	led.start(duty_cycle)
 
 	# Init parachute and watersplasher
-	GPIO.output(GPIO_PARACHUTE, False)
-	GPIO.output(GPIO_WATERSPLASHER, False)
+	GPIO.output(GPIO_PARACHUTE, GPIO.LOW)
+	GPIO.output(GPIO_WATERSPLASHER, GPIO.LOW)
 
-## Setter for fan speed
+# Setter for fan speed
 def set_fanspeed(speed):
 	global duty_cycle
 
@@ -157,21 +147,47 @@ def set_fanspeed(speed):
 	# TODO Remove when working
 	socketio.emit('serverEvent', {'data': 'Set fan speed to ' + str(duty_cycle)}, namespace="/events")
 
+# Setter for parachute state
+def open_parachute():
+	GPIO.output(GPIO_PARACHUTE, GPIO.HIGH)
+	emit('raspiParachuteOpenEvent', None, broadcast=True)
 
-# Main - Start Flask server through SocketIO for websocket support
+# Setter for Watersplasher
+def watersplasher_on():
+	GPIO.output(GPIO_WATERSPLASHER, GPIO.HIGH)
+	emit('raspiWaterSplasherOnEvent', None, broadcast=True)
+
+def watersplasher_off():
+	GPIO.output(GPIO_WATERSPLASHER, GPIO.LOW)
+	emit('raspiWaterSplasherOffEvent', None, broadcast=True)
+
+# RasPi GPIO button callbacks
+def ready_button_event_handler(pin):
+	socketio.emit('raspiPlayerReadyEvent', 'Player is ready to go', namespace="/events")
+
+def start_button_event_handler(pin):
+	socketio.emit('raspiStartJumpEvent', 'Jump Started', namespace="/events")
+	socketio.emit('serverEvent', {'data': 'Jump Started'}, namespace="/events")
+
+
+## Main - Start Flask server through SocketIO for websocket support
 if __name__ == '__main__':
 	# Set locale for Flask
 	locale.setlocale(locale.LC_ALL, '')
 
-	init_pwm()
+	init_gpio()
 
 	# Set debug option if desired
 	if "debug" in sys.argv:
 		app.debug = True
 
-	# Blocking! - Start Flask server
-	socketio.run(app, host='0.0.0.0')
+	try:
+		# Blocking! - Start Flask server
+		socketio.run(app, host='0.0.0.0')
+	except KeyboardInterrupt, e:
+		pass
 
 	# Reset GPIO
+	print "Cleanup GPIO"
 	led.stop()
 	GPIO.cleanup()

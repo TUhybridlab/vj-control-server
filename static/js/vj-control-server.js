@@ -72,10 +72,9 @@ FanSlider = function(fanAPI) {
 		});
 	}
 
-	self.setSlider = function(data) {
-		console.log("setting slider to " + data.speed);
+	self.setSlider = function(speed) {
 		self.onChangeCallbackEnabled = false;
-		$( "#slider" ).slider( "option", "value", data.speed);
+		$( "#slider" ).slider( "option", "value", speed);
 		self.onChangeCallbackEnabled = true;
 	}
 
@@ -91,7 +90,7 @@ EventSocket = function(){
 
 	// Receive fan event from server
 	ret.on('fanEvent', function(msg) {
-		fanAPI.getFanSpeed();
+		fanSlider.setSlider(msg);
 	});
 
 
@@ -104,7 +103,7 @@ EventSocket = function(){
 }
 
 fanAPI = FanAPI();
-fanslider = FanSlider(fanAPI);
+fanSlider = FanSlider(fanAPI);
 eventSocket = EventSocket(fanAPI);
 
 // For the time now
