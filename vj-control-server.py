@@ -59,7 +59,10 @@ def get_fan_speed():
 
 @app.route(EVENT_URL, methods=['POST'])
 def broadcast_event():
-	socketio.emit('serverEvent', {'data': request.json['data']}, namespace="/events")
+	if request.json and 'data' in request.json:
+		socketio.emit('serverEvent', {'data': request.json['data']}, namespace="/events")
+	else:
+		socketio.emit('serverEvent', {'data': request.form['data']}, namespace="/events")
 
 	return jsonify({'error': 0}), 201
 
