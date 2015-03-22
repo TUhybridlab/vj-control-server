@@ -5,6 +5,8 @@ import locale
 
 import RPi.GPIO as GPIO
 
+import serial
+
 from flask import Flask, send_from_directory, jsonify, request
 from flask.ext.socketio import SocketIO, emit
 
@@ -25,6 +27,11 @@ FAN_URL = BASE_URL + "fan/"
 PARACHUTE_URL = BASE_URL + "parachute/"
 WATERSPLASHER_URL = BASE_URL + "watersplasher/"
 EVENT_URL = BASE_URL + "events/"
+
+
+# TODO: Hook Up Arduino's serial
+## Serial communication with Arduino
+SERIAL_NAME = "/dev/ttyUSB0"
 
 
 ## Instanciate Flask (Static files and REST API)
@@ -160,6 +167,24 @@ def init_gpio():
 	GPIO.output(GPIO_PARACHUTE, GPIO.LOW)
 	GPIO.output(GPIO_WATERSPLASHER, GPIO.LOW)
 
+
+## Serial console
+def init_serial():
+	global serialPort
+
+	try:
+		serialPort = serial.Serial(SERIAL_NAME)
+	except OSError:
+		serialPort = None
+
+def send_serial_command(command, value):
+	if (serialPort):
+		serialPort.write(command + int2bin(value) + '\n')
+
+def int2bin(value):
+	return struct.pack('!B',value)
+
+
 # Setter for fan speed
 def set_fanspeed(speed):
 	global duty_cycle
@@ -167,6 +192,7 @@ def set_fanspeed(speed):
 	# Set PWM-DutyCycle of pin
 	duty_cycle = duty_cycle = min(max(speed, 0), 100)
 	led.ChangeDutyCycle(int(duty_cycle))
+	send_serial_command('F', duty_cycle)
 
 	# TODO Remove when working
 	socketio.emit('raspiFanEvent', speed, namespace="/events")
@@ -176,6 +202,7 @@ def open_parachute():
 	global parachute_state
 
 	GPIO.output(GPIO_PARACHUTE, GPIO.HIGH)
+	send_serial_command('P', 1)
 	parachute_state = True;
 	socketio.emit('raspiParachuteOpenEvent', None, namespace="/events")
 
@@ -183,6 +210,7 @@ def close_parachute():
 	global parachute_state
 
 	GPIO.output(GPIO_PARACHUTE, GPIO.LOW)
+	send_serial_command('P', 0)
 	parachute_state = False;
 	socketio.emit('raspiParachuteCloseEvent', None, namespace="/events")
 
@@ -191,6 +219,7 @@ def watersplasher_on():
 	global watersplasher_state
 
 	GPIO.output(GPIO_WATERSPLASHER, GPIO.HIGH)
+	send_serial_command('W', 1)
 	watersplasher_state = True;
 	socketio.emit('raspiWaterSplasherOnEvent', None, namespace="/events")
 
@@ -198,6 +227,7 @@ def watersplasher_off():
 	global watersplasher_state
 
 	GPIO.output(GPIO_WATERSPLASHER, GPIO.LOW)
+	send_serial_command('W', 0)
 	watersplasher_state = False;
 	socketio.emit('raspiWaterSplasherOffEvent', None, namespace="/events")
 
@@ -216,6 +246,7 @@ if __name__ == '__main__':
 	locale.setlocale(locale.LC_ALL, '')
 
 	init_gpio()
+	init_serial()
 
 	# Set debug option if desired
 	if "debug" in sys.argv:
