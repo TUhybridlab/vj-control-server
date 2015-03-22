@@ -1,4 +1,6 @@
 FAN_URL="/fan/"
+PARACHUTE_URL="/parachute/"
+WATERSPLASHER_URL = "/watersplasher/"
 EVENT_URL="/events/"
 
 
@@ -65,7 +67,15 @@ VjControlAPI = function() {
 	}
 
 	self.getFanSpeed = function() {
-		ajax_json(FAN_URL, "GET", null, false, do_nothing, do_nothing).done(function(data) { self.setSlider(data); });
+		ajax_json(FAN_URL, "GET", null, true, do_nothing, do_nothing).done(function(data) { self.setSlider(data.speed); });
+	}
+
+	self.getParachuteState = function() {
+		ajax_json(PARACHUTE_URL, "GET", null, true, function(data) { parachuteSwitch.setSwitchState(data.parachute); });
+	}
+
+	self.getWatersplasherState = function() {
+		ajax_json(WATERSPLASHER_URL, "GET", null, true, function(data) { watersplasherSwitch.setSwitchState(data.watersplasher); });
 	}
 
 	return self;
@@ -168,6 +178,11 @@ jumpStateSwitch = new UiSwitch('input#jump-state', eventSocket, do_nothing, true
 
 watersplasherSwitch = new UiSwitch('input#watersplasher-state', eventSocket, function(event, state) {if (state) eventSocket.emit('unityWaterSplasherOnEvent', '[DEBUG] Switch on Watersplasher'); else eventSocket.emit('unityWaterSplasherOffEvent', '[DEBUG] Switch off Watersplasher');});
 parachuteSwitch = new UiSwitch('input#parachute-state', eventSocket, function(event, state) {if (state) eventSocket.emit('unityParachuteOpenEvent', '[DEBUG] Open parachute'); else eventSocket.emit('unityResetLevel', '[DEBUG] Reset level');});
+
+
+vjAPI.getFanSpeed();
+vjAPI.getParachuteState();
+vjAPI.getWatersplasherState();
 
 
 // For the time now

@@ -22,6 +22,8 @@ GPIO_BUTTON_READY = 24
 ## REST API URLs
 BASE_URL="/"
 FAN_URL = BASE_URL + "fan/"
+PARACHUTE_URL = BASE_URL + "parachute/"
+WATERSPLASHER_URL = BASE_URL + "watersplasher/"
 EVENT_URL = BASE_URL + "events/"
 
 
@@ -61,6 +63,14 @@ def set_fan_speed_post():
 @app.route(FAN_URL, methods=['GET'])
 def get_fan_speed():
 	return jsonify({'speed': duty_cycle}), 200
+
+@app.route(PARACHUTE_URL, methods=['GET'])
+def get_parachute_state():
+	return jsonify({'parachute': parachute_state}), 200
+
+@app.route(WATERSPLASHER_URL, methods=['GET'])
+def get_watersplasher_state():
+	return jsonify({'watersplasher': watersplasher_state}), 200
 
 @app.route(EVENT_URL, methods=['POST'])
 def broadcast_event():
@@ -115,6 +125,8 @@ def unity_watersplasher_off(message):
 def init_gpio():
 	global led
 	global duty_cycle
+	global parachute_state
+	global watersplasher_state
 
 	GPIO.setmode(GPIO.BCM)
 
@@ -133,9 +145,11 @@ def init_gpio():
 
 	# Setup output for parachute
 	GPIO.setup(GPIO_PARACHUTE, GPIO.OUT)
+	parachute_state = False;
 
 	# Setup output for water splasher
 	GPIO.setup(GPIO_WATERSPLASHER, GPIO.OUT)
+	watersplasher_state = False;
 
     # Init LED
 	led = GPIO.PWM(GPIO_FAN, PWM_FREQUENCY)
@@ -159,21 +173,33 @@ def set_fanspeed(speed):
 
 # Setter for parachute state
 def open_parachute():
+	global parachute_state
+
 	GPIO.output(GPIO_PARACHUTE, GPIO.HIGH)
-	emit('raspiParachuteOpenEvent', None, broadcast=True)
+	parachute_state = True;
+	socketio.emit('raspiParachuteOpenEvent', None, namespace="/events")
 
 def close_parachute():
+	global parachute_state
+
 	GPIO.output(GPIO_PARACHUTE, GPIO.LOW)
-	emit('raspiParachuteCloseEvent', None, broadcast=True)
+	parachute_state = False;
+	socketio.emit('raspiParachuteCloseEvent', None, namespace="/events")
 
 # Setter for Watersplasher
 def watersplasher_on():
+	global watersplasher_state
+
 	GPIO.output(GPIO_WATERSPLASHER, GPIO.HIGH)
-	emit('raspiWaterSplasherOnEvent', None, broadcast=True)
+	watersplasher_state = True;
+	socketio.emit('raspiWaterSplasherOnEvent', None, namespace="/events")
 
 def watersplasher_off():
+	global watersplasher_state
+
 	GPIO.output(GPIO_WATERSPLASHER, GPIO.LOW)
-	emit('raspiWaterSplasherOffEvent', None, broadcast=True)
+	watersplasher_state = False;
+	socketio.emit('raspiWaterSplasherOffEvent', None, namespace="/events")
 
 # RasPi GPIO button callbacks
 def ready_button_event_handler(pin):
