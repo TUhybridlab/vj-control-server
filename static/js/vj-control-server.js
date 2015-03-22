@@ -39,7 +39,7 @@ ajax_json = function(uri, method, request_data, is_async, success_callback, erro
 	return $.ajax(request);
 }
 
-FanAPI = function() {
+VjControlAPI = function() {
 	var self = this;
 
 	self.setFanSpeed = function(speed_percentage) {
@@ -140,9 +140,9 @@ EventSocket = function(){
 	return ret;
 }
 
-fanAPI = FanAPI();
-fanSlider = FanSlider(fanAPI);
-eventSocket = EventSocket(fanAPI);
+vjAPI = VjControlAPI();
+fanSlider = FanSlider(vjAPI);
+eventSocket = EventSocket(vjAPI);
 
 // For the time now
 Date.prototype.timeNow = function () {
