@@ -39,6 +39,24 @@ ajax_json = function(uri, method, request_data, is_async, success_callback, erro
 	return $.ajax(request);
 }
 
+UiSwitch = function(id, eventSocket, onStateChanged, readOnly) {
+	var self = this;
+	self.id = id;
+	self.uiSwitch = $(id);
+
+	self.setSwitchState = function(state) {
+		self.uiSwitch.bootstrapSwitch('state', state, true);
+	}
+
+	self.uiSwitch.bootstrapSwitch('state', false, true);
+	self.uiSwitch.bootstrapSwitch('readonly', readOnly);
+	self.uiSwitch.on('switchChange.bootstrapSwitch', function(event, state) {
+		onStateChanged(event, state);
+	});
+
+	return self;
+}
+
 VjControlAPI = function() {
 	var self = this;
 
@@ -97,44 +115,44 @@ EventSocket = function(){
 	// Watersplasher switched on
 	ret.on('raspiWaterSplasherOnEvent', function(msg) {
 		log('[DEBUG] Watersplasher: On');
-		watersplasherSwitch.bootstrapSwitch('state', true, true);
+		watersplasherSwitch.setSwitchState(true);
 	});
 
 	// Watersplasher switched off
 	ret.on('raspiWaterSplasherOffEvent', function(msg) {
 		log('[DEBUG] Watersplasher: Off');
-		watersplasherSwitch.bootstrapSwitch('state', false, true);
+		watersplasherSwitch.setSwitchState(false);
 	});
 
 	// Parachute opened
 	ret.on('raspiParachuteOpenEvent', function(msg) {
 		log('[DEBUG] Parachute opened');
-		parachuteSwitch.bootstrapSwitch('state', true, true);
+		parachuteSwitch.setSwitchState(true);
 	});
 
 	// Parachute closed
 	ret.on('raspiParachuteCloseEvent', function(msg) {
 		log('[DEBUG] Parachute closed');
-		parachuteSwitch.bootstrapSwitch('state', false, true);
+		parachuteSwitch.setSwitchState(false);
 	});
 
 	// Ready to jump
 	ret.on('raspiUnityReadyEvent', function(msg) {
 		log('[DEBUG] Unity is ready');
-		readyStateSwitch.bootstrapSwitch('state', true, true);
+		readyStateSwitch.setSwitchState(true);
 	});
 
 	// Start jump
 	ret.on('raspiJumpStartedEvent', function(msg) {
 		log('[DEBUG] Player jumped');
-		jumpStateSwitch.bootstrapSwitch('state', true, true);
-		readyStateSwitch.bootstrapSwitch('state', false, true);
+		jumpStateSwitch.setSwitchState(true);
+		readyStateSwitch.setSwitchState(false);
 	});
 
 	// Landing
 	ret.on('raspiLandingEvent', function(msg) {
 		log('[DEBUG] Player landed');
-		jumpStateSwitch.bootstrapSwitch('state', false, true);
+		jumpStateSwitch.setSwitchState(false);
 	});
 
 	return ret;
@@ -143,6 +161,14 @@ EventSocket = function(){
 vjAPI = VjControlAPI();
 fanSlider = FanSlider(vjAPI);
 eventSocket = EventSocket(vjAPI);
+
+
+readyStateSwitch = new UiSwitch('input#ready-state', eventSocket, do_nothing, true);
+jumpStateSwitch = new UiSwitch('input#jump-state', eventSocket, do_nothing, true);
+
+watersplasherSwitch = new UiSwitch('input#watersplasher-state', eventSocket, function(event, state) {if (state) eventSocket.emit('unityWaterSplasherOnEvent', '[DEBUG] Switch on Watersplasher'); else eventSocket.emit('unityWaterSplasherOffEvent', '[DEBUG] Switch off Watersplasher');});
+parachuteSwitch = new UiSwitch('input#parachute-state', eventSocket, function(event, state) {if (state) eventSocket.emit('unityParachuteOpenEvent', '[DEBUG] Open parachute'); else eventSocket.emit('unityResetLevel', '[DEBUG] Reset level');});
+
 
 // For the time now
 Date.prototype.timeNow = function () {

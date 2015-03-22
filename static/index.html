@@ -57,37 +57,8 @@
 
     </div>
 
-    <script type="text/javascript" src="/js/vj-control-server.js"></script>
     <script type="text/javascript" src="/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="/js/bootstrap-switch.js"></script>
-
-    <script type="text/javascript">
-        var parachuteSwitch = $('input#parachute-state');
-        parachuteSwitch.bootstrapSwitch('state', false, true);
-        parachuteSwitch.on('switchChange.bootstrapSwitch', function(event, state) {
-            if (state)
-                eventSocket.emit('unityParachuteOpenEvent', '[DEBUG] Open parachute');
-            else
-                eventSocket.emit('unityResetLevel', '[DEBUG] Reset level');
-        });
-
-        var watersplasherSwitch = $('input#watersplasher-state');
-        watersplasherSwitch.bootstrapSwitch('state', false, true);
-        watersplasherSwitch.on('switchChange.bootstrapSwitch', function(event, state) {
-            if (state)
-                eventSocket.emit('unityWaterSplasherOnEvent', '[DEBUG] Switch on Watersplasher');
-            else
-                eventSocket.emit('unityWaterSplasherOffEvent', '[DEBUG] Switch off Watersplasher');
-        });
-
-        var jumpStateSwitch = $('input#jump-state');
-        jumpStateSwitch.bootstrapSwitch('readonly', true);
-        jumpStateSwitch.bootstrapSwitch('state', false, true);
-
-        var readyStateSwitch = $('input#ready-state');
-        readyStateSwitch.bootstrapSwitch('readonly', true);
-        readyStateSwitch.bootstrapSwitch('state', false, true);
-    </script>
-
+    <script type="text/javascript" src="/js/vj-control-server.js"></script>
 </body>
 </html>
