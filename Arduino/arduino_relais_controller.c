@@ -18,16 +18,12 @@ void setup() {
 
 void loop()
 {
-	char messsage[] = NULL;
-
-	char command = 0;
-	char value = 0;
+	int command = 0;
+	int value = 0;
 
 	if(Serial.available() > 0) {
-		message = Serial.readln();
-
-		command = message[0];
-		value = message[1];
+		command = Serial.read();
+		value = Serial.read();
 
 		switch(command) {
 			case 'F':
