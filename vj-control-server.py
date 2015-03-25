@@ -179,7 +179,9 @@ def init_serial():
 
 def send_serial_command(command, value):
 	if (serialPort):
-		serialPort.write(command + int2bin(value) + '\n')
+		ret = serialPort.write("" + command + int2bin(value))
+
+	print "Sent", ret, "Bytes"
 
 def int2bin(value):
 	return struct.pack('!B',value)
