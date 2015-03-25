@@ -2,6 +2,7 @@
 
 import sys
 import locale
+import struct
 
 import RPi.GPIO as GPIO
 
@@ -245,7 +246,7 @@ def start_button_event_handler(pin):
 ## Main - Start Flask server through SocketIO for websocket support
 if __name__ == '__main__':
 	# Set locale for Flask
-	locale.setlocale(locale.LC_ALL, '')
+	#locale.setlocale(locale.LC_ALL, '')
 
 	init_gpio()
 	init_serial()
