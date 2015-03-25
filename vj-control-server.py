@@ -32,7 +32,7 @@ EVENT_URL = BASE_URL + "events/"
 
 # TODO: Hook Up Arduino's serial
 ## Serial communication with Arduino
-SERIAL_NAME = "/dev/ttyUSB0"
+SERIAL_NAME = "/dev/ttyACM0"
 
 
 ## Instanciate Flask (Static files and REST API)
