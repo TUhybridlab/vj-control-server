@@ -175,14 +175,17 @@ def init_serial():
 
 	try:
 		serialPort = serial.Serial(SERIAL_NAME)
-	except OSError:
+	except OSError, e:
 		serialPort = None
+		print e
+
+	print "Serial:", serialPort
 
 def send_serial_command(command, value):
+	message = "" + command + int2bin(value)
 	if (serialPort):
-		ret = serialPort.write("" + command + int2bin(value))
-
-	print "Sent", ret, "Bytes"
+		ret = serialPort.write(message)
+		print "Sent", ret, "Bytes:", message, "being", command, value
 
 def int2bin(value):
 	return struct.pack('!B',value)
