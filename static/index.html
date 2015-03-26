@@ -14,6 +14,7 @@
     <script type="text/javascript" src="/js/jquery-ui.min.js"></script>
     <script type="text/javascript" src="/js/socket.io.min.js"></script>
     <script type="text/javascript" src="/js/jqClock.js"></script>
+    <script type="text/javascript" src="/js/stopwatch.js"></script>
 
 </head>
 <body>
@@ -70,14 +71,17 @@
                 <div class="container-fluid">
                     <h2>Event log</h2>
                     <hr>
-                    <p><div id="clock"></div></p>
-                    <script type="text/javascript"> $("div#clock").clock({"calendar": "false", "format": "24"}); </script>
+                    <p>
+                        <span id="clock"></span>
+                        <span id="watchdisplay" class="pull-right"></span>
+                    </p>
                     <div id="log"></div>
                 </div>
             </div>
         </div>
     </div>
 
+    <script type="text/javascript"> $("#clock").clock({"calendar": "false", "format": "24"}); </script>
     <script type="text/javascript" src="/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="/js/bootstrap-switch.js"></script>
     <script type="text/javascript" src="/js/vj-control-server.js"></script>

@@ -169,6 +169,8 @@ EventSocket = function(){
 		log('[DEBUG] Player jumped');
 		jumpStateSwitch.setSwitchState(true);
 		readyStateSwitch.setSwitchState(false);
+		myWatch.reset();
+		myWatch.start();
 	});
 
 	// Landing
@@ -191,6 +193,12 @@ serverConnectedStateSwitch = new UiSwitch('input#server-connection-state', do_no
 
 watersplasherSwitch = new UiSwitch('input#watersplasher-state', function(event, state) {if (state) eventSocket.emit('unityWaterSplasherOnEvent', '[DEBUG] Switch on Watersplasher'); else eventSocket.emit('unityWaterSplasherOffEvent', '[DEBUG] Switch off Watersplasher');});
 parachuteSwitch = new UiSwitch('input#parachute-state', function(event, state) {if (state) eventSocket.emit('unityParachuteOpenEvent', '[DEBUG] Open parachute'); else eventSocket.emit('unityResetLevel', '[DEBUG] Reset level');});
+
+updateWatch = function (watch) {
+	$('#watchdisplay').text('Since Start: '+watch.toString());
+	console.log("Updating watch");
+};
+myWatch = new Stopwatch(updateWatch, 100);
 
 
 // For the time now
