@@ -19,6 +19,7 @@ void setup() {
   pinMode(PARACHUTE_PIN, OUTPUT);
   pinMode(WATERSPLASHER_PIN, OUTPUT);
 
+  // Setup interrupt on supply zero-crossing
   attachInterrupt(ZERO_CROSSING_INTERRUPT, zero_cross_detect, RISING);
 }
 
@@ -26,7 +27,7 @@ int readFromSerial() {
   while(Serial.available() < 1){
     ;
   }
- return Serial.read();
+  return Serial.read();
 }
 
 void loop()
@@ -40,8 +41,10 @@ void loop()
     messageStart = readFromSerial();
   while (messageStart != 0xFF);
 
-  command = readFromSerial();
-  value = readFromSerial();
+  do {
+    command = readFromSerial();
+    value = readFromSerial();
+  } while (value == 0xFF);
 
   switch(command) {
   case 'F':
@@ -66,7 +69,7 @@ void loop()
       digitalWrite(WATERSPLASHER_PIN, LOW);
     break;
   default:
-    Serial.write('d');
+    Serial.write('?');
     break;
   }
 }
