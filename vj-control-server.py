@@ -193,6 +193,10 @@ def init_serial():
 
 def send_serial_command(command, value):
 	# Protocol: Start each message with 255 (= 0xFF)
+	if value > 254 or value < 0:
+		print "Values allowed: 0 - 254!!! Not sending value", value
+		return;
+
 	message = int2bin(255) + command + int2bin(value)
 	if (serial_port):
 		serial_lock.acquire(True)
