@@ -102,6 +102,7 @@ FanSlider = function(vjAPI) {
 	self.setSlider = function(speed) {
 		self.onChangeCallbackEnabled = false;
 		$( "#slider" ).slider( "option", "value", speed);
+		$("#slider_value").text(speed + "%");
 		self.onChangeCallbackEnabled = true;
 	}
 
