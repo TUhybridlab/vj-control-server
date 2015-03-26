@@ -160,7 +160,7 @@ def init_gpio():
 	GPIO.setup(GPIO_WATERSPLASHER, GPIO.OUT)
 	watersplasher_state = False;
 
-    # Init LED
+	# Init LED
 	led = GPIO.PWM(GPIO_FAN, PWM_FREQUENCY)
 	duty_cycle = 0
 	led.start(duty_cycle)

@@ -80,7 +80,7 @@ VjControlAPI = function() {
 	return self;
 }
 
-FanSlider = function(fanAPI) {
+FanSlider = function(vjAPI) {
 	var self = this;
 	self.onChangeCallbackEnabled = true;
 
@@ -94,7 +94,7 @@ FanSlider = function(fanAPI) {
 			// Set speed with slider
 			$( "#slider" ).on( "slidechange", function( event, ui ) {
 				if (self.onChangeCallbackEnabled)
-					fanAPI.setFanSpeed($( "#slider" ).slider( "value" ));
+					vjAPI.setFanSpeed($( "#slider" ).slider( "value" ));
 			});
 		});
 	}
