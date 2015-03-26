@@ -192,15 +192,15 @@ def init_serial():
 	print "Serial:", serial_port
 
 def send_serial_command(command, value):
-	global serial_lock
-
 	# Protocol: Start each message with 255 (= 0xFF)
 	message = int2bin(255) + command + int2bin(value)
 	if (serial_port):
 		serial_lock.acquire(True)
 		ret = serial_port.write(message)
-		serial_lock.release()
 		print "Sent", ret, "Bytes:", "", message,"" , "being", command, value
+		serial_lock.release()
+	else:
+		print "Not sending - no serial port?"
 
 def int2bin(value):
 	return struct.pack('!B',value)
