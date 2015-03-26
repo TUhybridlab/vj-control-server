@@ -3,6 +3,7 @@
 import sys
 import locale
 import struct
+import threading
 
 import RPi.GPIO as GPIO
 
@@ -171,24 +172,52 @@ def init_gpio():
 
 ## Serial console
 def init_serial():
-	global serialPort
+	global serial_port
+	global serial_lock
 
 	try:
-		serialPort = serial.Serial(SERIAL_NAME)
+		# Init Serial port
+		serial_port = serial.Serial(SERIAL_NAME, timeout=1)
+		serial_port.flushInput()
+		serial_port.flushOutput()
+		serial_lock = threading.Lock()
+
+		# Start logger thread
+		log_thread = threading.Thread(target=log_port, args=(serial_port,))
+		log_thread.start()
 	except OSError, e:
-		serialPort = None
+		serial_port = None
 		print e
 
-	print "Serial:", serialPort
+	print "Serial:", serial_port
 
 def send_serial_command(command, value):
+	global serial_lock
+
 	message = "" + command + int2bin(value)
-	if (serialPort):
-		ret = serialPort.write(message)
-		print "Sent", ret, "Bytes:", message, "being", command, value
+	if (serial_port):
+		serial_lock.acquire(True)
+		ret = serial_port.write(message)
+		serial_lock.release()
+		print "Sent", ret, "Bytes:", "", message,"" , "being", command, value
 
 def int2bin(value):
 	return struct.pack('!B',value)
+
+def bin2int(value):
+	return struct.unpack('!B',value)[0]
+
+def log_port(ser):
+	global serial_lock
+
+	if serial_port is not None:
+		serial_port.flushInput()
+	while serial_port is not None:
+		reading = ser.read()
+		if reading:
+			print "Received bin:", "", reading, "", "int:", bin2int(reading)
+
+	print "Closing logger"
 
 
 # Setter for fan speed
@@ -248,6 +277,8 @@ def start_button_event_handler(pin):
 
 ## Main - Start Flask server through SocketIO for websocket support
 if __name__ == '__main__':
+	global serial_port
+
 	# Set locale for Flask
 	#locale.setlocale(locale.LC_ALL, '')
 
@@ -263,6 +294,12 @@ if __name__ == '__main__':
 		socketio.run(app, host='0.0.0.0')
 	except KeyboardInterrupt, e:
 		pass
+
+	# Close serial port
+	print "Close serial port"
+	if serial_port is not None and serial_port.isOpen():
+		serial_port.close()
+		serial_port = None
 
 	# Reset GPIO
 	print "Cleanup GPIO"
