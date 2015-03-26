@@ -4,6 +4,8 @@
     <meta charset="utf-8">
     <title>..:: VJ COntrol Panel ::..</title>
 
+    <link rel="stylesheet" href="/css/vj-control-server.css">
+
     <link rel="stylesheet" href="/css/bootstrap.min.css">
     <link rel="stylesheet" href="/css/bootstrap-switch.css">
     <link rel="stylesheet" href="/css/jquery-ui.min.css">
@@ -16,49 +18,63 @@
 </head>
 <body>
     <div class="container">
-        <h2> VJ Control Panel</h2>
         <div class="row">
-            <h3>Socket</h3>
-            <div class="col-md-4"><input id="server-connection-state" checked="" type="checkbox" data-on-text="Connected" data-off-text="Disconnected"></div>
+            <div class="col-xs-5 box">
+
+                <div class="container-fluid">
+
+                    <h2> VJ Control Panel</h2>
+                    <hr>
+                    <h3>Socket</h3>
+                    <div class="row">
+                        <div class="col-xs-6"><input id="server-connection-state" checked="" type="checkbox" data-on-text="Connected" data-off-text="Disconnected"></div>
+                    </div>
+
+                    <h3>Jump sections</h3>
+                    <div class="row">
+
+                        <div class="col-xs-4">
+                            <h4>Ready to Jump</h4>
+                            <input id="ready-state" checked="" type="checkbox" data-on-text="Yes" data-off-text="No">
+                        </div>
+
+                        <div class="col-xs-4">
+                            <h4>Jump</h4>
+                            <input id="jump-state" checked="" type="checkbox" data-on-text="Started" data-off-text="Ended">
+                        </div>
+                    </div>
+
+                    <h3>Environment</h3>
+                    <div class="row">
+
+                        <div class="col-xs-4">
+                            <h4>Parachute</h4>
+                            <input id="parachute-state" checked="" type="checkbox" data-on-text="Open" data-off-text="Closed">
+                        </div>
+                        <div class="col-xs-4">
+                            <h4>Fan speed</h4>
+                            <div id="slider"></div>
+                        </div>
+
+                        <div class="col-xs-4">
+                            <h4>Watersplasher</h4>
+                            <input id="watersplasher-state" checked="" type="checkbox" data-on-text="On" data-off-text="Off">
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="col-xs-5 box">
+                <div class="container-fluid">
+                    <h2>Event log</h2>
+                    <hr>
+                    <p><div id="clock"></div></p>
+                    <script type="text/javascript"> $("div#clock").clock({"calendar": "false", "format": "24"}); </script>
+                    <div id="log"></div>
+                </div>
+            </div>
         </div>
-
-        <div class="row">
-            <h3>Jump sections</h3>
-            <div class="col-md-4">
-                <h4>Ready to Jump</h4>
-                <input id="ready-state" checked="" type="checkbox" data-on-text="Yes" data-off-text="No">
-            </div>
-
-            <div class="col-md-4">
-                <h4>Jump</h4>
-                <input id="jump-state" checked="" type="checkbox" data-on-text="Started" data-off-text="Ended">
-            </div>
-
-            <div class="col-md-4">
-                <h4>Parachute</h4>
-                <input id="parachute-state" checked="" type="checkbox" data-on-text="Open" data-off-text="Closed">
-            </div>
-        </div>
-        <div class="row">
-            <h3>Environment</h3>
-            <div class="col-md-4">
-                <h4>Fan speed</h4>
-                <div id="slider"></div>
-            </div>
-
-            <div class="col-md-4">
-                <h4>Watersplasher</h4>
-                <input id="watersplasher-state" checked="" type="checkbox" data-on-text="On" data-off-text="Off">
-            </div>
-        </div>
-
-        <div class="row">
-            <h3>Event log</h3>
-            <div id="log"></div>
-            <div id="clock"></div>
-            <script type="text/javascript"> $("div#clock").clock({"calendar": "false", "format": "24"}); </script>
-        </div>
-
     </div>
 
     <script type="text/javascript" src="/js/bootstrap.min.js"></script>

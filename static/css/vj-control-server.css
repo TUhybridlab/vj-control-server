@@ -1,0 +1,12 @@
+.container-fluid {
+	margin: 30px;
+	border: 2px solid #ddd;
+	border-radius: 5px;
+	background-color: white;
+	box-shadow: 3px 3px 3px rgba(0,0,0, 0.3);
+	padding-bottom: 30px;
+}
+
+.slider-value {
+	text-align: right;
+}

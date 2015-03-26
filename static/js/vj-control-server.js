@@ -13,7 +13,7 @@ default_error = function (jqXHR) {
 
 log = function(msg) {
 	time = new Date().timeNow();
-	$('#log').append('<p>'+ time + ' - '+ msg + '</p>');
+	$('#log').prepend('<p>'+ time + ' - '+ msg + '</p>');
 }
 
 ajax_json = function(uri, method, request_data, is_async, success_callback, error_callback) {
@@ -115,6 +115,7 @@ EventSocket = function(){
 	var ret = io.connect('http://' + document.domain + ':' + location.port + '/events');
 
 	ret.on('connect', function(msg) {
+		log('[INFO] Socket connected.');
 		serverConnectedStateSwitch.setSwitchState(true);
 		vjAPI.getFanSpeed();
 		vjAPI.getParachuteState();
@@ -122,6 +123,7 @@ EventSocket = function(){
 	});
 
 	ret.on('disconnect', function(msg) {
+		log('[ERROR] Socket disconnected!');
 		serverConnectedStateSwitch.setSwitchState(false);
 	});
 
