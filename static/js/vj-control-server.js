@@ -63,7 +63,7 @@ VjControlAPI = function() {
 	var self = this;
 
 	self.setFanSpeed = function(speed_percentage) {
-		ajax_json(FAN_URL + speed_percentage, "PUT", null, true, do_nothing, do_nothing);
+		eventSocket.emit('unityFanSpeedEvent', speed_percentage);
 	}
 
 	self.getFanSpeed = function() {
