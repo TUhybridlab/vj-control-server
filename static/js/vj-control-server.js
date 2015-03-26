@@ -114,6 +114,13 @@ FanSlider = function(fanAPI) {
 EventSocket = function(){
 	var ret = io.connect('http://' + document.domain + ':' + location.port + '/events');
 
+	ret.on('connect', function(msg) {
+		serverConnectedStateSwitch.setSwitchState(true);
+	});
+
+	ret.on('disconnect', function(msg) {
+		serverConnectedStateSwitch.setSwitchState(false);
+	});
 
 	// Receive fan event from server
 	ret.on('raspiFanEvent', function(msg) {
@@ -174,6 +181,7 @@ eventSocket = EventSocket(vjAPI);
 
 readyStateSwitch = new UiSwitch('input#ready-state', do_nothing);
 jumpStateSwitch = new UiSwitch('input#jump-state', do_nothing);
+serverConnectedStateSwitch = new UiSwitch('input#server-connection-state', do_nothing);
 
 watersplasherSwitch = new UiSwitch('input#watersplasher-state', function(event, state) {if (state) eventSocket.emit('unityWaterSplasherOnEvent', '[DEBUG] Switch on Watersplasher'); else eventSocket.emit('unityWaterSplasherOffEvent', '[DEBUG] Switch off Watersplasher');});
 parachuteSwitch = new UiSwitch('input#parachute-state', function(event, state) {if (state) eventSocket.emit('unityParachuteOpenEvent', '[DEBUG] Open parachute'); else eventSocket.emit('unityResetLevel', '[DEBUG] Reset level');});
