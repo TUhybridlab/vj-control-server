@@ -116,6 +116,9 @@ EventSocket = function(){
 
 	ret.on('connect', function(msg) {
 		serverConnectedStateSwitch.setSwitchState(true);
+		vjAPI.getFanSpeed();
+		vjAPI.getParachuteState();
+		vjAPI.getWatersplasherState();
 	});
 
 	ret.on('disconnect', function(msg) {
@@ -185,11 +188,6 @@ serverConnectedStateSwitch = new UiSwitch('input#server-connection-state', do_no
 
 watersplasherSwitch = new UiSwitch('input#watersplasher-state', function(event, state) {if (state) eventSocket.emit('unityWaterSplasherOnEvent', '[DEBUG] Switch on Watersplasher'); else eventSocket.emit('unityWaterSplasherOffEvent', '[DEBUG] Switch off Watersplasher');});
 parachuteSwitch = new UiSwitch('input#parachute-state', function(event, state) {if (state) eventSocket.emit('unityParachuteOpenEvent', '[DEBUG] Open parachute'); else eventSocket.emit('unityResetLevel', '[DEBUG] Reset level');});
-
-
-vjAPI.getFanSpeed();
-vjAPI.getParachuteState();
-vjAPI.getWatersplasherState();
 
 
 // For the time now
