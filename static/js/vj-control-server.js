@@ -41,7 +41,7 @@ ajax_json = function(uri, method, request_data, is_async, success_callback, erro
 	return $.ajax(request);
 }
 
-UiSwitch = function(id, eventSocket, onStateChanged, readOnly) {
+UiSwitch = function(id, onStateChanged) {
 	var self = this;
 	self.id = id;
 	self.uiSwitch = $(id);
@@ -51,7 +51,6 @@ UiSwitch = function(id, eventSocket, onStateChanged, readOnly) {
 	}
 
 	self.uiSwitch.bootstrapSwitch('state', false, true);
-	self.uiSwitch.bootstrapSwitch('readonly', readOnly);
 	self.uiSwitch.on('switchChange.bootstrapSwitch', function(event, state) {
 		onStateChanged(event, state);
 	});
@@ -173,11 +172,11 @@ fanSlider = FanSlider(vjAPI);
 eventSocket = EventSocket(vjAPI);
 
 
-readyStateSwitch = new UiSwitch('input#ready-state', eventSocket, do_nothing, true);
-jumpStateSwitch = new UiSwitch('input#jump-state', eventSocket, do_nothing, true);
+readyStateSwitch = new UiSwitch('input#ready-state', do_nothing);
+jumpStateSwitch = new UiSwitch('input#jump-state', do_nothing);
 
-watersplasherSwitch = new UiSwitch('input#watersplasher-state', eventSocket, function(event, state) {if (state) eventSocket.emit('unityWaterSplasherOnEvent', '[DEBUG] Switch on Watersplasher'); else eventSocket.emit('unityWaterSplasherOffEvent', '[DEBUG] Switch off Watersplasher');});
-parachuteSwitch = new UiSwitch('input#parachute-state', eventSocket, function(event, state) {if (state) eventSocket.emit('unityParachuteOpenEvent', '[DEBUG] Open parachute'); else eventSocket.emit('unityResetLevel', '[DEBUG] Reset level');});
+watersplasherSwitch = new UiSwitch('input#watersplasher-state', function(event, state) {if (state) eventSocket.emit('unityWaterSplasherOnEvent', '[DEBUG] Switch on Watersplasher'); else eventSocket.emit('unityWaterSplasherOffEvent', '[DEBUG] Switch off Watersplasher');});
+parachuteSwitch = new UiSwitch('input#parachute-state', function(event, state) {if (state) eventSocket.emit('unityParachuteOpenEvent', '[DEBUG] Open parachute'); else eventSocket.emit('unityResetLevel', '[DEBUG] Reset level');});
 
 
 vjAPI.getFanSpeed();
