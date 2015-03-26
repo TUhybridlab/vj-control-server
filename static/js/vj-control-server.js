@@ -187,8 +187,8 @@ fanSlider = FanSlider(vjAPI);
 eventSocket = EventSocket(vjAPI);
 
 
-readyStateSwitch = new UiSwitch('input#ready-state', do_nothing);
-jumpStateSwitch = new UiSwitch('input#jump-state', do_nothing);
+readyStateSwitch = new UiSwitch('input#ready-state', function(event, state) {if (state) eventSocket.emit('unityReadyEvent', '[DEBUG] Unity ready!'); else eventSocket.emit('unityResetLevel', '[DEBUG] Reset level');});
+jumpStateSwitch = new UiSwitch('input#jump-state', function(event, state) {if (state) eventSocket.emit('unityJumpStartedEvent', '[DEBUG] Start Jump'); else eventSocket.emit('unityLandingEvent', '[DEBUG] Player landed');});
 serverConnectedStateSwitch = new UiSwitch('input#server-connection-state', do_nothing);
 
 watersplasherSwitch = new UiSwitch('input#watersplasher-state', function(event, state) {if (state) eventSocket.emit('unityWaterSplasherOnEvent', '[DEBUG] Switch on Watersplasher'); else eventSocket.emit('unityWaterSplasherOffEvent', '[DEBUG] Switch off Watersplasher');});
