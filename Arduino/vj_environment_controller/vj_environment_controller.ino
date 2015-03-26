@@ -31,8 +31,14 @@ int readFromSerial() {
 
 void loop()
 {
+  int messageStart = 0;
   int command = 0;
   int value = 0;
+
+  // Protocol: Start each message with 255 (= 0xFF)
+  do
+    messageStart = readFromSerial();
+  while (messageStart != 0xFF);
 
   command = readFromSerial();
   value = readFromSerial();

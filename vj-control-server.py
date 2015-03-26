@@ -194,7 +194,8 @@ def init_serial():
 def send_serial_command(command, value):
 	global serial_lock
 
-	message = "" + command + int2bin(value)
+	# Protocol: Start each message with 255 (= 0xFF)
+	message = int2bin(255) + command + int2bin(value)
 	if (serial_port):
 		serial_lock.acquire(True)
 		ret = serial_port.write(message)
