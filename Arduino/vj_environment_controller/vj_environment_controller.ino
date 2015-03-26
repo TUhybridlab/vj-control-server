@@ -22,19 +22,20 @@ void setup() {
   attachInterrupt(ZERO_CROSSING_INTERRUPT, zero_cross_detect, RISING);
 }
 
+int readFromSerial() {
+  while(Serial.available() < 1){
+    ;
+  }
+ return Serial.read();
+}
+
 void loop()
 {
   int command = 0;
   int value = 0;
 
-  while(Serial.available() < 1){
-    ;
-  }
-  command = Serial.read();
-  while(Serial.available() < 1){
-    ;
-  }   
-  value = Serial.read();
+  command = readFromSerial();
+  value = readFromSerial();
 
   switch(command) {
   case 'F':
