@@ -195,7 +195,7 @@ watersplasherSwitch = new UiSwitch('input#watersplasher-state', function(event, 
 parachuteSwitch = new UiSwitch('input#parachute-state', function(event, state) {if (state) eventSocket.emit('unityParachuteOpenEvent', '[DEBUG] Open parachute'); else eventSocket.emit('unityResetLevel', '[DEBUG] Reset level');});
 
 updateWatch = function (watch) {
-	$('#watchdisplay').text('Since Start: '+watch.toString());
+	$('#watchdisplay').text(watch.toString());
 	console.log("Updating watch");
 };
 myWatch = new Stopwatch(updateWatch, 100);
