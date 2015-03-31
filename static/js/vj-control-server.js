@@ -2,6 +2,7 @@ FAN_URL="/fan/"
 PARACHUTE_URL="/parachute/"
 WATERSPLASHER_URL = "/watersplasher/"
 EVENT_URL="/events/"
+JUMP_STATE_URL="/jumpState/"
 
 
 do_nothing = function() {}
@@ -77,6 +78,10 @@ VjControlAPI = function() {
 		ajax_json(WATERSPLASHER_URL, "GET", null, true, function(data) { watersplasherSwitch.setSwitchState(data.watersplasher); });
 	}
 
+	self.getJumpState = function() {
+		ajax_json(JUMP_STATE_URL, "GET", null, true, function(data) { jumpStateSwitch.setSwitchState(data.jumpStarted); });
+	}
+
 	return self;
 }
 
@@ -121,6 +126,7 @@ EventSocket = function(){
 		vjAPI.getFanSpeed();
 		vjAPI.getParachuteState();
 		vjAPI.getWatersplasherState();
+		vjAPI.getJumpState();
 	});
 
 	ret.on('disconnect', function(msg) {

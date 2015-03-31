@@ -29,6 +29,7 @@ FAN_URL = BASE_URL + "fan/"
 PARACHUTE_URL = BASE_URL + "parachute/"
 WATERSPLASHER_URL = BASE_URL + "watersplasher/"
 EVENT_URL = BASE_URL + "events/"
+JUMP_STATE_URL = BASE_URL + "jumpState/"
 
 
 # TODO: Hook Up Arduino's serial
@@ -81,6 +82,10 @@ def get_parachute_state():
 def get_watersplasher_state():
 	return jsonify({'watersplasher': watersplasher_state}), 200
 
+@app.route(JUMP_STATE_URL, methods=['GET'])
+def get_jump_state():
+	return jsonify({'jumpStarted': jump_started}), 200
+
 @app.route(EVENT_URL, methods=['POST'])
 def broadcast_event():
 	if request.json and 'data' in request.json:
@@ -99,6 +104,7 @@ def unity_ready(message):
 
 @socketio.on('unityJumpStartedEvent', namespace='/events')
 def unity_ready(message):
+	trigger_start()
 	emit('raspiJumpStartedEvent', {'data': message}, broadcast=True)
 
 @socketio.on('unityParachuteOpenEvent', namespace='/events')
@@ -114,6 +120,7 @@ def unity_reset(message):
 	close_parachute()
 	set_fanspeed(0)
 	watersplasher_off()
+	reset_start_trigger()
 
 # Enivronment control
 @socketio.on('unityFanSpeedEvent', namespace='/events')
@@ -136,6 +143,7 @@ def init_gpio():
 	global duty_cycle
 	global parachute_state
 	global watersplasher_state
+	global jump_started
 
 	GPIO.setmode(GPIO.BCM)
 
@@ -164,6 +172,9 @@ def init_gpio():
 	led = GPIO.PWM(GPIO_FAN, PWM_FREQUENCY)
 	duty_cycle = 0
 	led.start(duty_cycle)
+
+	# Init jump state
+	jump_started = False
 
 	# Init parachute and watersplasher
 	GPIO.output(GPIO_PARACHUTE, GPIO.LOW)
@@ -270,6 +281,21 @@ def watersplasher_off():
 	send_serial_command('W', 0)
 	watersplasher_state = False;
 	socketio.emit('raspiWaterSplasherOffEvent', None, namespace="/events")
+
+# Setter for start trigger
+def trigger_start():
+	global jump_started
+
+	if not jump_started:
+		send_serial_command('F', 1)
+		jump_started = True
+
+def reset_start_trigger():
+	global jump_started
+
+	send_serial_command('F', 0)
+	jump_started = False
+
 
 # RasPi GPIO button callbacks
 def ready_button_event_handler(pin):

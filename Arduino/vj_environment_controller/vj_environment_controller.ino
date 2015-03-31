@@ -7,6 +7,7 @@
 static const int FAN_PIN = 9;
 static const int PARACHUTE_PIN = 10;
 static const int WATERSPLASHER_PIN = 8;
+static const int START_TRIGGER_PIN = 11;
 static const int ZERO_CROSSING_INTERRUPT = 1;
 
 volatile int numCrossing = 0;
@@ -68,6 +69,14 @@ void loop()
       digitalWrite(WATERSPLASHER_PIN, HIGH);
     else
       digitalWrite(WATERSPLASHER_PIN, LOW);
+    break;
+  case 'S':
+    Serial.write('S');
+    Serial.write(value);
+    if (value == 1)
+      digitalWrite(START_TRIGGER_PIN, HIGH);
+    else
+      digitalWrite(START_TRIGGER_PIN, LOW);
     break;
   default:
     Serial.write('?');
