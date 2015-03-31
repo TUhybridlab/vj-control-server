@@ -10,6 +10,7 @@ static const int WATERSPLASHER_PIN = 8;
 static const int ZERO_CROSSING_INTERRUPT = 1;
 
 volatile int numCrossing = 0;
+volatile int numTenPack = 0;
 volatile int speedPercentage = 0;
 
 void setup() {
@@ -76,13 +77,24 @@ void loop()
 
 /** function to be fired at the zero crossing */
 void zero_cross_detect() {
-  numCrossing = (numCrossing + 1) % 100;
-  
-  if (numCrossing < speedPercentage)
-    digitalWrite(FAN_PIN, HIGH);
-  else
-    digitalWrite(FAN_PIN, LOW);
-  
+  numCrossing++;
+
+  if (numCrossing > 10) {
+    numCrossing = 0;
+    numTenPack = (numTenPack + 1) % 12;
+  }
+
+  if (numTenPack == 11) {
+    if (numCrossing < speedPercentage % 10)
+      digitalWrite(FAN_PIN, HIGH);
+    else
+      digitalWrite(FAN_PIN, LOW);
+  } else {
+    if (numCrossing < speedPercentage / 10)
+      digitalWrite(FAN_PIN, HIGH);
+    else
+      digitalWrite(FAN_PIN, LOW);
+  }
+
   Serial.write(numCrossing);
 }
-
