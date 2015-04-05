@@ -93,7 +93,8 @@ FanSlider = function(vjAPI) {
 		ajax_json(FAN_URL, "GET", null, false, do_nothing, do_nothing).done(function(data) {
 			// Initilaize slider with value
 			$( "#slider" ).slider({
-				value: data.speed
+				value: data.speed,
+				step: 10
 			});
 
 			// Set speed with slider

@@ -88,22 +88,22 @@ void loop()
 void zero_cross_detect() {
   numCrossing++;
 
-  if (numCrossing > 10) {
+  if (numCrossing > 9) {
     numCrossing = 0;
-    numTenPack = (numTenPack + 1) % 12;
+//    numTenPack = (numTenPack + 1) % 12;
   }
 
-  if (numTenPack == 11) {
-    if (numCrossing < speedPercentage % 10)
-      digitalWrite(FAN_PIN, HIGH);
-    else
-      digitalWrite(FAN_PIN, LOW);
-  } else {
+//  if (numTenPack == 11) {
+//    if (numCrossing < speedPercentage % 10)
+//      digitalWrite(FAN_PIN, HIGH);
+//    else
+//      digitalWrite(FAN_PIN, LOW);
+//  } else {
     if (numCrossing < speedPercentage / 10)
       digitalWrite(FAN_PIN, HIGH);
     else
       digitalWrite(FAN_PIN, LOW);
-  }
+//  }
 
-  Serial.write(numCrossing);
+//  Serial.write(numCrossing);
 }
