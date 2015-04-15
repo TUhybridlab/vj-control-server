@@ -121,6 +121,9 @@ FanSlider = function(vjAPI) {
 EventSocket = function(){
 	var ret = io.connect('http://' + document.domain + ':' + location.port + '/events');
 
+	var self = this;
+	self.previousFanSpeed = -1;
+
 	ret.on('connect', function(msg) {
 		log('[INFO] Socket connected.');
 		serverConnectedStateSwitch.setSwitchState(true);
@@ -138,7 +141,10 @@ EventSocket = function(){
 	// Receive fan event from server
 	ret.on('raspiFanEvent', function(msg) {
 		fanSlider.setSlider(msg);
-		log('[DEBUG] Set fan slider to ' + msg);
+		if (previousFanSpeed != msg) {
+			log('[DEBUG] Set fan slider to ' + msg);
+			previousFanSpeed = msg;
+		}
 	});
 
 	// Watersplasher switched on
