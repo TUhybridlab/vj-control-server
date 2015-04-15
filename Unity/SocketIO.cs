@@ -1,15 +1,27 @@
 ﻿using UnityEngine;
 using SocketIOClient;
 
-public class SocketIO : MonoBehaviour {
+public class SocketIO {
+
+	private static SocketIO instance = null;
+
 	private Client client;
 	private IEndPointClient socket;
 	private bool isJumpOngoing = false;
 	private bool isLevelReset = true;
 	private bool isReadyToJump = false;
 
+	public static SocketIO getInstance() {
+		if (instance == null) {
+			instance = new SocketIO();
+			instance.InitSocket();
+		}
+
+		return instance;
+	}
+
 	// Use this for initialization
-	void Start () {
+	private void InitSocket () {
 		client = new Client("http://192.168.1.50:5000");
 
 		client.Error += SocketError;
@@ -39,19 +51,6 @@ public class SocketIO : MonoBehaviour {
 
 		socket = client.Connect ("/events");
 	}
-
-	// Update is called once per frame
-	void Update () {
-		if (Input.GetKeyDown (KeyCode.Space))
-			if (isJumpOngoing)
-				EventLanding ();
-
-		if (Input.GetKeyDown (KeyCode.R))
-		if (!isJumpOngoing) {
-			EventResetLevel ();
-		}
-	}
-
 
 	/* -------------------- */
 	/* - Eventemitter     - */
