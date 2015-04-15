@@ -190,6 +190,8 @@ EventSocket = function(){
 	ret.on('raspiLandingEvent', function(msg) {
 		log('[DEBUG] Player landed');
 		jumpStateSwitch.setSwitchState(false);
+
+		myWatch.stop();
 	});
 
 	return ret;
