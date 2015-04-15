@@ -287,13 +287,13 @@ def trigger_start():
 	global jump_started
 
 	if not jump_started:
-		send_serial_command('F', 1)
+		send_serial_command('S', 1)
 		jump_started = True
 
 def reset_start_trigger():
 	global jump_started
 
-	send_serial_command('F', 0)
+	send_serial_command('S', 0)
 	jump_started = False
 
 
