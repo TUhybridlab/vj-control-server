@@ -26,18 +26,15 @@ public class SocketIO : MonoBehaviour {
 
 		client.On ("raspiStartJumpEvent", "/events", (data) =>
 		{
-			if (isReadyToJump) {
-				Debug.LogError("TODO: Hook up start");
+			Debug.LogError("TODO: Hook up start");
 
-				EventJumpStarted();
-				//EventLanding();
-			}
+			EventJumpStarted();
+			//EventLanding();
 		});
 
 		client.On ("raspiPlayerReadyEvent", "/events", (data) =>
 		{
-			if (isLevelReset)
-				EventUnityReady();
+			EventUnityReady();
 		});
 
 		socket = client.Connect ("/events");
