@@ -169,6 +169,7 @@ EventSocket = function(){
 	ret.on('raspiParachuteCloseEvent', function(msg) {
 		log('[DEBUG] Parachute closed');
 		parachuteSwitch.setSwitchState(false);
+		jumpStateSwitch.setSwitchState(false);
 	});
 
 	// Ready to jump
