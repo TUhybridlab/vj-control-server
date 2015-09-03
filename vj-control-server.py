@@ -1,5 +1,9 @@
 #!/usr/bin/python
 
+#Initialize logger
+import logging.config
+logging.config.fileConfig('log.ini')
+
 import sys
 import locale
 import struct
@@ -100,23 +104,28 @@ def broadcast_event():
 # Section of the Jump
 @socketio.on('unityReadyEvent', namespace='/events')
 def unity_ready(message):
+	logging.info("Got unity ready: " + str(message))
 	emit('raspiUnityReadyEvent', {'data': message}, broadcast=True)
 
 @socketio.on('unityJumpStartedEvent', namespace='/events')
 def unity_ready(message):
+	logging.info("Got jump started: " + str(message))
 	trigger_start()
 	emit('raspiJumpStartedEvent', {'data': message}, broadcast=True)
 
 @socketio.on('unityParachuteOpenEvent', namespace='/events')
 def unity_parachute(message):
+	logging.info("Got open parachute: " + str(message))
 	open_parachute()
 
 @socketio.on('unityLandingEvent', namespace='/events')
 def unity_landing(message):
+	logging.info("Got landing: " + str(message))
 	emit('raspiLandingEvent', {'data': message}, broadcast=True)
 
 @socketio.on('unityResetLevel', namespace='/events')
 def unity_reset(message):
+	logging.info("Got Unity Reset: " + str(message))
 	close_parachute()
 	set_fanspeed(0)
 	watersplasher_off()
@@ -125,14 +134,17 @@ def unity_reset(message):
 # Enivronment control
 @socketio.on('unityFanSpeedEvent', namespace='/events')
 def unity_fanspeed(message):
+	logging.info("Got fanspeed: " + str(message))
 	set_fanspeed(int(message))
 
 @socketio.on('unityWaterSplasherOnEvent', namespace='/events')
 def unity_watersplasher_on(message):
+	logging.info("Got watersplasher-on: " + str(message))
 	watersplasher_on()
 
 @socketio.on('unityWaterSplasherOffEvent', namespace='/events')
 def unity_watersplasher_off(message):
+	logging.info("Got watersplasher-off: " + str(message))
 	watersplasher_off()
 
 
@@ -198,24 +210,25 @@ def init_serial():
 		log_thread.start()
 	except OSError, e:
 		serial_port = None
-		print e
+		logging.error(str(e))
 
-	print "Serial:", serial_port
+	logging.debug("Serial: " + str(serial_port))
 
 def send_serial_command(command, value):
 	# Protocol: Start each message with 255 (= 0xFF)
 	if value > 254 or value < 0:
-		print "Values allowed: 0 - 254!!! Not sending value", value
+		logging.error("Values allowed: 0 - 254!!! Not sending value " + str(value))
 		return;
 
 	message = int2bin(255) + command + int2bin(value)
 	if (serial_port):
 		serial_lock.acquire(True)
 		ret = serial_port.write(message)
-		print "Sent", ret, "Bytes:", "", message,"" , "being", command, value
+		logging.debug("Sent " + str(ret) + " Bytes: " + str(message) +
+			" being " + str(command) + ", " + str(value))
 		serial_lock.release()
 	else:
-		print "Not sending - no serial port?"
+		logging.error("Not sending - no serial port?")
 
 def int2bin(value):
 	return struct.pack('!B',value)
@@ -231,14 +244,16 @@ def log_port(ser):
 	while serial_port is not None:
 		reading = ser.read()
 		if reading:
-			print "Received bin:", "", reading, "", "int:", bin2int(reading)
+			logging.debug("Received bin: " + str(reading) + " int: " + str(bin2int(reading)))
 
-	print "Closing logger"
+	logging.info("Closing logger")
 
 
 # Setter for fan speed
 def set_fanspeed(speed):
 	global duty_cycle
+
+	logging.debug("Setting fanspeed to " + str(speed))
 
 	# Set PWM-DutyCycle of pin
 	duty_cycle = duty_cycle = min(max(speed, 0), 100)
@@ -252,6 +267,8 @@ def set_fanspeed(speed):
 def open_parachute():
 	global parachute_state
 
+	logging.debug("Open parachute")
+
 	GPIO.output(GPIO_PARACHUTE, GPIO.HIGH)
 	send_serial_command('P', 1)
 	parachute_state = True;
@@ -259,6 +276,8 @@ def open_parachute():
 
 def close_parachute():
 	global parachute_state
+
+	logging.debug("Close parachute")
 
 	GPIO.output(GPIO_PARACHUTE, GPIO.LOW)
 	send_serial_command('P', 0)
@@ -269,6 +288,8 @@ def close_parachute():
 def watersplasher_on():
 	global watersplasher_state
 
+	logging.debug("Watersplasher on")
+
 	GPIO.output(GPIO_WATERSPLASHER, GPIO.HIGH)
 	send_serial_command('W', 1)
 	watersplasher_state = True;
@@ -276,6 +297,8 @@ def watersplasher_on():
 
 def watersplasher_off():
 	global watersplasher_state
+
+	logging.debug("Watersplasher off")
 
 	GPIO.output(GPIO_WATERSPLASHER, GPIO.LOW)
 	send_serial_command('W', 0)
@@ -327,12 +350,12 @@ if __name__ == '__main__':
 		pass
 
 	# Close serial port
-	print "Close serial port"
+	logging.info("Close serial port")
 	if serial_port is not None and serial_port.isOpen():
 		serial_port.close()
 		serial_port = None
 
 	# Reset GPIO
-	print "Cleanup GPIO"
 	led.stop()
+	logging.info("Cleanup GPIO")
 	GPIO.cleanup()
