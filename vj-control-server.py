@@ -8,8 +8,12 @@ import sys
 import locale
 import struct
 import threading
+import time
 
-import RPi.GPIO as GPIO
+try:
+	import RPi.GPIO as GPIO
+except Exception, e:
+	logging.critical("Couldn't import RPi.GPIO. Exception: " + str(e))
 
 import serial
 
@@ -36,7 +40,6 @@ EVENT_URL = BASE_URL + "events/"
 JUMP_STATE_URL = BASE_URL + "jumpState/"
 
 
-# TODO: Hook Up Arduino's serial
 ## Serial communication with Arduino
 SERIAL_NAME = "/dev/ttyACM0"
 
@@ -157,40 +160,46 @@ def init_gpio():
 	global watersplasher_state
 	global jump_started
 
-	GPIO.setmode(GPIO.BCM)
+	try:
+		GPIO.setmode(GPIO.BCM)
 
-	# Setup PWM for fan control
-	GPIO.setup(GPIO_FAN, GPIO.OUT)
+		# Setup PWM for fan control
+		GPIO.setup(GPIO_FAN, GPIO.OUT)
 
-	# Setup button for start detection
-	GPIO.setup(GPIO_BUTTON_START, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-	GPIO.add_event_detect(GPIO_BUTTON_START, GPIO.FALLING)
-	GPIO.add_event_callback(GPIO_BUTTON_START, start_button_event_handler)
+		# Setup button for start detection
+		GPIO.setup(GPIO_BUTTON_START, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+		GPIO.add_event_detect(GPIO_BUTTON_START, GPIO.FALLING)
+		GPIO.add_event_callback(GPIO_BUTTON_START, start_button_event_handler)
 
-	# Setup button for ready-state detection
-	GPIO.setup(GPIO_BUTTON_READY, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-	GPIO.add_event_detect(GPIO_BUTTON_READY, GPIO.FALLING)
-	GPIO.add_event_callback(GPIO_BUTTON_READY, ready_button_event_handler)
+		# Setup button for ready-state detection
+		GPIO.setup(GPIO_BUTTON_READY, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+		GPIO.add_event_detect(GPIO_BUTTON_READY, GPIO.FALLING)
+		GPIO.add_event_callback(GPIO_BUTTON_READY, ready_button_event_handler)
 
-	# Setup output for parachute
-	GPIO.setup(GPIO_PARACHUTE, GPIO.OUT)
+		# Setup output for parachute
+		GPIO.setup(GPIO_PARACHUTE, GPIO.OUT)
+
+		# Setup output for water splasher
+		GPIO.setup(GPIO_WATERSPLASHER, GPIO.OUT)
+	except Exception, e:
+		logging.error("Not able to initialize GPIO. Not on RPi? " + str(e))
+
+	# Init state variables
 	parachute_state = False;
-
-	# Setup output for water splasher
-	GPIO.setup(GPIO_WATERSPLASHER, GPIO.OUT)
 	watersplasher_state = False;
-
-	# Init LED
-	led = GPIO.PWM(GPIO_FAN, PWM_FREQUENCY)
 	duty_cycle = 0
-	led.start(duty_cycle)
-
-	# Init jump state
 	jump_started = False
 
-	# Init parachute and watersplasher
-	GPIO.output(GPIO_PARACHUTE, GPIO.LOW)
-	GPIO.output(GPIO_WATERSPLASHER, GPIO.LOW)
+	try:
+		# Init LED
+		led = GPIO.PWM(GPIO_FAN, PWM_FREQUENCY)
+		led.start(duty_cycle)
+
+		# Init parachute and watersplasher
+		GPIO.output(GPIO_PARACHUTE, GPIO.LOW)
+		GPIO.output(GPIO_WATERSPLASHER, GPIO.LOW)
+	except Exception, e:
+		logging.error("Not able to apply initial state to GPIO. Not on RPi? " + str(e))
 
 
 ## Serial console
@@ -209,6 +218,9 @@ def init_serial():
 		log_thread = threading.Thread(target=log_port, args=(serial_port,))
 		log_thread.start()
 	except OSError, e:
+		serial_port = None
+		logging.error(str(e))
+	except serial.serialutil.SerialException, e:
 		serial_port = None
 		logging.error(str(e))
 
@@ -332,6 +344,7 @@ def start_button_event_handler(pin):
 ## Main - Start Flask server through SocketIO for websocket support
 if __name__ == '__main__':
 	global serial_port
+	global start_time
 
 	# Set locale for Flask
 	#locale.setlocale(locale.LC_ALL, '')
@@ -342,6 +355,8 @@ if __name__ == '__main__':
 	# Set debug option if desired
 	if "debug" in sys.argv:
 		app.debug = True
+
+	start_time = time.time()
 
 	try:
 		# Blocking! - Start Flask server
@@ -356,6 +371,10 @@ if __name__ == '__main__':
 		serial_port = None
 
 	# Reset GPIO
-	led.stop()
 	logging.info("Cleanup GPIO")
-	GPIO.cleanup()
+
+	try:
+		led.stop()
+		GPIO.cleanup()
+	except Exception, e:
+		logging.critical("Not able to clean up. " + str(e))
