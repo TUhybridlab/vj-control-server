@@ -1,4 +1,4 @@
-jinja==2.7.3
+jinja2==2.7.3
 flask==0.10.1
 itsdangerous==0.24
 werkzeug==0.10.4
