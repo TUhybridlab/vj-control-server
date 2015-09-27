@@ -361,20 +361,17 @@ if __name__ == '__main__':
 	try:
 		# Blocking! - Start Flask server
 		socketio.run(app, host='0.0.0.0')
-	except KeyboardInterrupt, e:
-		pass
+	finally:
+		# Close serial port
+		logging.info("Close serial port")
+		if serial_port is not None and serial_port.isOpen():
+			serial_port.close()
+			serial_port = None
 
-	# Close serial port
-	logging.info("Close serial port")
-	if serial_port is not None and serial_port.isOpen():
-		serial_port.close()
-		serial_port = None
-
-	# Reset GPIO
-	logging.info("Cleanup GPIO")
-
-	try:
-		led.stop()
-		GPIO.cleanup()
-	except Exception, e:
-		logging.critical("Not able to clean up. " + str(e))
+		# Reset GPIO
+		logging.info("Cleanup GPIO")
+		try:
+			led.stop()
+			GPIO.cleanup()
+		except Exception, e:
+			logging.critical("Not able to clean up. " + str(e))
