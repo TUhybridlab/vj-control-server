@@ -9,6 +9,7 @@ import locale
 import struct
 import threading
 import time
+import signal
 
 try:
 	import RPi.GPIO as GPIO
@@ -341,6 +342,10 @@ def start_button_event_handler(pin):
 	socketio.emit('serverEvent', {'data': 'Jump Started'}, namespace="/events")
 
 
+# Shutdown signal handler
+def sigTermHandler(signum, frame):
+	raise KeyboardInterrupt('Signal %i receivied!' % signum)
+
 ## Main - Start Flask server through SocketIO for websocket support
 if __name__ == '__main__':
 	global serial_port
@@ -359,8 +364,13 @@ if __name__ == '__main__':
 	start_time = time.time()
 
 	try:
+		# Set signal handler for Shutdown
+		signal.signal(signal.SIGTERM, sigTermHandler)
+
 		# Blocking! - Start Flask server
 		socketio.run(app, host='0.0.0.0')
+	except KeyboardInterrupt:
+		pass
 	finally:
 		# Close serial port
 		logging.info("Close serial port")
