@@ -1,25 +1,31 @@
 #!/usr/bin/python
-
-#Initialize logger
 import logging.config
-logging.config.fileConfig('log.ini')
-
-import sys
 import locale
+import serial
+import signal
 import struct
+import sys
 import threading
 import time
-import signal
-
-try:
-	import RPi.GPIO as GPIO
-except Exception, e:
-	logging.critical("Couldn't import RPi.GPIO. Exception: " + str(e))
-
-import serial
 
 from flask import Flask, send_from_directory, jsonify, request
 from flask.ext.socketio import SocketIO, emit
+
+
+## Initialize logger
+logging.config.fileConfig('log.ini')
+
+
+## See if GPIO is available
+try:
+	import RPi.GPIO as GPIO
+	HIGH = GPIO.HIGH
+	LOW = GPIO.LOW
+except Exception, e:
+	GPIO = None
+	HIGH = 'HIGH'
+	LOW = 'LOW'
+	logging.critical("Couldn't import RPi.GPIO. Exception: " + str(e))
 
 
 ## Parameters
@@ -40,9 +46,19 @@ WATERSPLASHER_URL = BASE_URL + "watersplasher/"
 EVENT_URL = BASE_URL + "events/"
 JUMP_STATE_URL = BASE_URL + "jumpState/"
 
-
 ## Serial communication with Arduino
 SERIAL_NAME = "/dev/ttyACM0"
+
+
+## Global variables
+led = None
+duty_cycle = 0
+parachute_state = False
+watersplasher_state = False
+jump_started = False
+serial_port = None
+serial_lock = None
+start_time = None
 
 
 ## Instanciate Flask (Static files and REST API)
@@ -155,12 +171,6 @@ def unity_watersplasher_off(message):
 ## Raspberry GPIO
 # Init
 def init_gpio():
-	global led
-	global duty_cycle
-	global parachute_state
-	global watersplasher_state
-	global jump_started
-
 	try:
 		GPIO.setmode(GPIO.BCM)
 
@@ -182,6 +192,9 @@ def init_gpio():
 
 		# Setup output for water splasher
 		GPIO.setup(GPIO_WATERSPLASHER, GPIO.OUT)
+
+		# Setup Fan debug LED
+		led = GPIO.PWM(GPIO_FAN, PWM_FREQUENCY)
 	except Exception, e:
 		logging.error("Not able to initialize GPIO. Not on RPi? " + str(e))
 
@@ -193,21 +206,18 @@ def init_gpio():
 
 	try:
 		# Init LED
-		led = GPIO.PWM(GPIO_FAN, PWM_FREQUENCY)
-		led.start(duty_cycle)
+		if led:
+			led.start(duty_cycle)
 
 		# Init parachute and watersplasher
-		GPIO.output(GPIO_PARACHUTE, GPIO.LOW)
-		GPIO.output(GPIO_WATERSPLASHER, GPIO.LOW)
+		GPIO.output(GPIO_PARACHUTE, LOW)
+		GPIO.output(GPIO_WATERSPLASHER, LOW)
 	except Exception, e:
 		logging.error("Not able to apply initial state to GPIO. Not on RPi? " + str(e))
 
 
 ## Serial console
 def init_serial():
-	global serial_port
-	global serial_lock
-
 	try:
 		# Init Serial port
 		serial_port = serial.Serial(SERIAL_NAME, timeout=1)
@@ -235,13 +245,15 @@ def send_serial_command(command, value):
 
 	message = int2bin(255) + command + int2bin(value)
 	if (serial_port):
-		serial_lock.acquire(True)
-		ret = serial_port.write(message)
-		logging.debug("Sent " + str(ret) + " Bytes: " + str(message) +
-			" being " + str(command) + ", " + str(value))
-		serial_lock.release()
+		try:
+			serial_lock.acquire(True)
+			ret = serial_port.write(message)
+			logging.debug("Sent %s Bytes: %s being %s , %s",
+				ret, message, command, value)
+		finally:
+			serial_lock.release()
 	else:
-		logging.error("Not sending - no serial port?")
+		logging.error("Not sending %s, %s - no serial port?", command, value)
 
 def int2bin(value):
 	return struct.pack('!B',value)
@@ -250,85 +262,76 @@ def bin2int(value):
 	return struct.unpack('!B',value)[0]
 
 def log_port(ser):
-	global serial_lock
-
 	if serial_port is not None:
 		serial_port.flushInput()
 	while serial_port is not None:
 		reading = ser.read()
 		if reading:
-			logging.debug("Received bin: " + str(reading) + " int: " + str(bin2int(reading)))
+			logging.debug("Received: %s, int: %s", reading, bin2int(reading))
 
 	logging.info("Closing logger")
 
+def setGpio(pin, value):
+	if GPIO:
+		GPIO.output(pin, value)
+	else:
+		logging.error('Cannot set pin %i to %s!' % (pin, str(value)))
 
 # Setter for fan speed
 def set_fanspeed(speed):
-	global duty_cycle
-
-	logging.debug("Setting fanspeed to " + str(speed))
+	logging.debug("Setting fanspeed to %s", speed)
 
 	# Set PWM-DutyCycle of pin
 	duty_cycle = duty_cycle = min(max(speed, 0), 100)
-	led.ChangeDutyCycle(int(duty_cycle))
 	send_serial_command('F', duty_cycle)
 
 	# TODO Remove when working
 	socketio.emit('raspiFanEvent', speed, namespace="/events")
 
+	if led:
+		led.ChangeDutyCycle(int(duty_cycle))
+
 # Setter for parachute state
 def open_parachute():
-	global parachute_state
-
 	logging.debug("Open parachute")
 
-	GPIO.output(GPIO_PARACHUTE, GPIO.HIGH)
+	setGpio(GPIO_PARACHUTE, HIGH)
 	send_serial_command('P', 1)
 	parachute_state = True;
 	socketio.emit('raspiParachuteOpenEvent', None, namespace="/events")
 
 def close_parachute():
-	global parachute_state
-
 	logging.debug("Close parachute")
 
-	GPIO.output(GPIO_PARACHUTE, GPIO.LOW)
+	setGpio(GPIO_PARACHUTE, LOW)
 	send_serial_command('P', 0)
 	parachute_state = False;
 	socketio.emit('raspiParachuteCloseEvent', None, namespace="/events")
 
 # Setter for Watersplasher
 def watersplasher_on():
-	global watersplasher_state
-
 	logging.debug("Watersplasher on")
 
-	GPIO.output(GPIO_WATERSPLASHER, GPIO.HIGH)
+	setGpio(GPIO_WATERSPLASHER, HIGH)
 	send_serial_command('W', 1)
 	watersplasher_state = True;
 	socketio.emit('raspiWaterSplasherOnEvent', None, namespace="/events")
 
 def watersplasher_off():
-	global watersplasher_state
-
 	logging.debug("Watersplasher off")
 
-	GPIO.output(GPIO_WATERSPLASHER, GPIO.LOW)
+	setGpio(GPIO_WATERSPLASHER, LOW)
 	send_serial_command('W', 0)
 	watersplasher_state = False;
 	socketio.emit('raspiWaterSplasherOffEvent', None, namespace="/events")
 
 # Setter for start trigger
 def trigger_start():
-	global jump_started
-
 	if not jump_started:
 		send_serial_command('S', 1)
 		jump_started = True
 
 def reset_start_trigger():
-	global jump_started
-
 	send_serial_command('S', 0)
 	jump_started = False
 
@@ -348,9 +351,6 @@ def sigTermHandler(signum, frame):
 
 ## Main - Start Flask server through SocketIO for websocket support
 if __name__ == '__main__':
-	global serial_port
-	global start_time
-
 	# Set locale for Flask
 	#locale.setlocale(locale.LC_ALL, '')
 
@@ -384,4 +384,4 @@ if __name__ == '__main__':
 			led.stop()
 			GPIO.cleanup()
 		except Exception, e:
-			logging.critical("Not able to clean up. " + str(e))
+			logging.exception("Not able to clean up. Reason: %s", e)
