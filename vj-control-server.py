@@ -171,6 +171,8 @@ def unity_watersplasher_off(message):
 ## Raspberry GPIO
 # Init
 def init_gpio():
+	global led
+
 	try:
 		GPIO.setmode(GPIO.BCM)
 
@@ -208,6 +210,8 @@ def init_gpio():
 		# Init LED
 		if led:
 			led.start(duty_cycle)
+		else:
+			logging.critical("Cannot initialize LED!")
 
 		# Init parachute and watersplasher
 		GPIO.output(GPIO_PARACHUTE, LOW)
@@ -279,6 +283,8 @@ def setGpio(pin, value):
 
 # Setter for fan speed
 def set_fanspeed(speed):
+	global led
+
 	logging.debug("Setting fanspeed to %s", speed)
 
 	# Set PWM-DutyCycle of pin
@@ -290,6 +296,8 @@ def set_fanspeed(speed):
 
 	if led:
 		led.ChangeDutyCycle(int(duty_cycle))
+	else:
+		logging.critical("No LED!")
 
 # Setter for parachute state
 def open_parachute():
