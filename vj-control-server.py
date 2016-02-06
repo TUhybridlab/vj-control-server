@@ -21,11 +21,11 @@ try:
 	import RPi.GPIO as GPIO
 	HIGH = GPIO.HIGH
 	LOW = GPIO.LOW
-except Exception, e:
+except ImportError, error:
 	GPIO = None
 	HIGH = 'HIGH'
 	LOW = 'LOW'
-	logging.critical("Couldn't import RPi.GPIO. Exception: %s", e)
+	logging.critical("Couldn't import RPi.GPIO. Exception: %s", error)
 
 
 ## Parameters
@@ -39,7 +39,7 @@ GPIO_BUTTON_START = 23
 GPIO_BUTTON_READY = 24
 
 ## REST API URLs
-BASE_URL="/"
+BASE_URL = "/"
 FAN_URL = BASE_URL + "fan/"
 PARACHUTE_URL = BASE_URL + "parachute/"
 WATERSPLASHER_URL = BASE_URL + "watersplasher/"
@@ -128,7 +128,7 @@ def unity_ready(message):
 	emit('raspiUnityReadyEvent', {'data': message}, broadcast=True)
 
 @socketio.on('unityJumpStartedEvent', namespace='/events')
-def unity_ready(message):
+def unity_jump_started(message):
 	logging.info("Got jump started: %s", message)
 	trigger_start()
 	emit('raspiJumpStartedEvent', {'data': message}, broadcast=True)
@@ -197,27 +197,13 @@ def init_gpio():
 
 		# Setup Fan debug LED
 		led = GPIO.PWM(GPIO_FAN, PWM_FREQUENCY)
-	except Exception, e:
-		logging.error("Not able to initialize GPIO. Not on RPi? Reason: %s", e)
-
-	# Init state variables
-	parachute_state = False;
-	watersplasher_state = False;
-	duty_cycle = 0
-	jump_started = False
-
-	try:
-		# Init LED
-		if led:
-			led.start(duty_cycle)
-		else:
-			logging.critical("Cannot initialize LED!")
+		led.start(duty_cycle)
 
 		# Init parachute and watersplasher
 		GPIO.output(GPIO_PARACHUTE, LOW)
 		GPIO.output(GPIO_WATERSPLASHER, LOW)
-	except Exception, e:
-		logging.error("Not able to apply initial state to GPIO. Not on RPi? Reason: %s", e)
+	except AttributeError, error:
+		logging.error("Not able to apply initial state to GPIO. Not on RPi? Reason: %s", error)
 
 
 ## Serial console
@@ -278,16 +264,16 @@ def log_port(ser):
 
 	logging.info("Closing logger")
 
-def setGpio(pin, value):
+def set_gpio(pin, value):
 	if GPIO:
 		GPIO.output(pin, value)
 	else:
 		logging.error('Cannot set pin %i to %s!', pin, value)
 
+
+## Helpers
 # Setter for fan speed
 def set_fanspeed(speed):
-	global led
-
 	logging.debug("Setting fanspeed to %s", speed)
 
 	# Set PWM-DutyCycle of pin
@@ -306,34 +292,34 @@ def set_fanspeed(speed):
 def open_parachute():
 	logging.debug("Open parachute")
 
-	setGpio(GPIO_PARACHUTE, HIGH)
+	set_gpio(GPIO_PARACHUTE, HIGH)
 	send_serial_command('P', 1)
-	parachute_state = True;
+	parachute_state = True
 	socketio.emit('raspiParachuteOpenEvent', None, namespace="/events")
 
 def close_parachute():
 	logging.debug("Close parachute")
 
-	setGpio(GPIO_PARACHUTE, LOW)
 	send_serial_command('P', 0)
-	parachute_state = False;
+	set_gpio(GPIO_PARACHUTE, LOW)
+	parachute_state = False
 	socketio.emit('raspiParachuteCloseEvent', None, namespace="/events")
 
 # Setter for Watersplasher
 def watersplasher_on():
 	logging.debug("Watersplasher on")
 
-	setGpio(GPIO_WATERSPLASHER, HIGH)
 	send_serial_command('W', 1)
-	watersplasher_state = True;
+	set_gpio(GPIO_WATERSPLASHER, HIGH)
+	watersplasher_state = True
 	socketio.emit('raspiWaterSplasherOnEvent', None, namespace="/events")
 
 def watersplasher_off():
 	logging.debug("Watersplasher off")
 
-	setGpio(GPIO_WATERSPLASHER, LOW)
+	set_gpio(GPIO_WATERSPLASHER, LOW)
 	send_serial_command('W', 0)
-	watersplasher_state = False;
+	watersplasher_state = False
 	socketio.emit('raspiWaterSplasherOffEvent', None, namespace="/events")
 
 # Setter for start trigger
@@ -356,12 +342,13 @@ def start_button_event_handler(pin):
 	socketio.emit('serverEvent', {'data': 'Jump Started'}, namespace="/events")
 
 
-# Shutdown signal handler
+## Shutdown signal handler
 def sigTermHandler(signum, frame):
 	raise KeyboardInterrupt('Signal %i receivied!' % signum)
 
+
 ## Main - Start Flask server through SocketIO for websocket support
-if __name__ == '__main__':
+def main():
 	# Set locale for Flask
 	#locale.setlocale(locale.LC_ALL, '')
 
@@ -394,5 +381,8 @@ if __name__ == '__main__':
 		try:
 			led.stop()
 			GPIO.cleanup()
-		except Exception, e:
-			logging.exception("Not able to clean up. Reason: %s", e)
+		except AttributeError, error:
+			logging.exception("Not able to clean up. Reason: %s", error)
+
+if __name__ == '__main__':
+	main()
