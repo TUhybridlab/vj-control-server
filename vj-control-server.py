@@ -25,7 +25,7 @@ except Exception, e:
 	GPIO = None
 	HIGH = 'HIGH'
 	LOW = 'LOW'
-	logging.critical("Couldn't import RPi.GPIO. Exception: " + str(e))
+	logging.critical("Couldn't import RPi.GPIO. Exception: %s", e)
 
 
 ## Parameters
@@ -124,28 +124,28 @@ def broadcast_event():
 # Section of the Jump
 @socketio.on('unityReadyEvent', namespace='/events')
 def unity_ready(message):
-	logging.info("Got unity ready: " + str(message))
+	logging.info("Got unity ready: %s", message)
 	emit('raspiUnityReadyEvent', {'data': message}, broadcast=True)
 
 @socketio.on('unityJumpStartedEvent', namespace='/events')
 def unity_ready(message):
-	logging.info("Got jump started: " + str(message))
+	logging.info("Got jump started: %s", message)
 	trigger_start()
 	emit('raspiJumpStartedEvent', {'data': message}, broadcast=True)
 
 @socketio.on('unityParachuteOpenEvent', namespace='/events')
 def unity_parachute(message):
-	logging.info("Got open parachute: " + str(message))
+	logging.info("Got open parachute: %s", message)
 	open_parachute()
 
 @socketio.on('unityLandingEvent', namespace='/events')
 def unity_landing(message):
-	logging.info("Got landing: " + str(message))
+	logging.info("Got landing: %s", message)
 	emit('raspiLandingEvent', {'data': message}, broadcast=True)
 
 @socketio.on('unityResetLevel', namespace='/events')
 def unity_reset(message):
-	logging.info("Got Unity Reset: " + str(message))
+	logging.info("Got Unity Reset: %s", message)
 	close_parachute()
 	set_fanspeed(0)
 	watersplasher_off()
@@ -154,17 +154,17 @@ def unity_reset(message):
 # Enivronment control
 @socketio.on('unityFanSpeedEvent', namespace='/events')
 def unity_fanspeed(message):
-	logging.info("Got fanspeed: " + str(message))
+	logging.info("Got fanspeed: %s", message)
 	set_fanspeed(int(message))
 
 @socketio.on('unityWaterSplasherOnEvent', namespace='/events')
 def unity_watersplasher_on(message):
-	logging.info("Got watersplasher-on: " + str(message))
+	logging.info("Got watersplasher-on: %s", message)
 	watersplasher_on()
 
 @socketio.on('unityWaterSplasherOffEvent', namespace='/events')
 def unity_watersplasher_off(message):
-	logging.info("Got watersplasher-off: " + str(message))
+	logging.info("Got watersplasher-off: %s", message)
 	watersplasher_off()
 
 
@@ -198,7 +198,7 @@ def init_gpio():
 		# Setup Fan debug LED
 		led = GPIO.PWM(GPIO_FAN, PWM_FREQUENCY)
 	except Exception, e:
-		logging.error("Not able to initialize GPIO. Not on RPi? " + str(e))
+		logging.error("Not able to initialize GPIO. Not on RPi? Reason: %s", e)
 
 	# Init state variables
 	parachute_state = False;
@@ -217,7 +217,7 @@ def init_gpio():
 		GPIO.output(GPIO_PARACHUTE, LOW)
 		GPIO.output(GPIO_WATERSPLASHER, LOW)
 	except Exception, e:
-		logging.error("Not able to apply initial state to GPIO. Not on RPi? " + str(e))
+		logging.error("Not able to apply initial state to GPIO. Not on RPi? Reason: %s", e)
 
 
 ## Serial console
@@ -247,7 +247,7 @@ def init_serial():
 def send_serial_command(command, value):
 	# Protocol: Start each message with 255 (= 0xFF)
 	if value > 254 or value < 0:
-		logging.error("Values allowed: 0 - 254!!! Not sending value " + str(value))
+		logging.error("Values allowed: 0 - 254!!! Not sending value %s", value)
 		return;
 
 	message = int2bin(255) + command + int2bin(value)
@@ -282,7 +282,7 @@ def setGpio(pin, value):
 	if GPIO:
 		GPIO.output(pin, value)
 	else:
-		logging.error('Cannot set pin %i to %s!' % (pin, str(value)))
+		logging.error('Cannot set pin %i to %s!', pin, value)
 
 # Setter for fan speed
 def set_fanspeed(speed):
