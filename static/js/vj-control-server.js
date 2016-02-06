@@ -66,6 +66,20 @@ VjControlAPI = function() {
 		eventSocket.emit('unityFanSpeedEvent', speed_percentage);
 	}
 
+	self.setWatersplasher = function(event, state) {
+		if (state)
+			eventSocket.emit('unityWaterSplasherOnEvent', '');
+		else
+			eventSocket.emit('unityWaterSplasherOffEvent', '');
+	}
+
+	self.setParachute = function(event, state) {
+		if (state)
+			eventSocket.emit('unityParachuteOpenEvent', '');
+		else
+			eventSocket.emit('unityResetLevel', '');
+	}
+
 	self.getFanSpeed = function() {
 		ajax_json(FAN_URL, "GET", null, true, do_nothing, do_nothing).done(function(data) { self.setSlider(data.speed); });
 	}
@@ -207,8 +221,8 @@ readyStateSwitch = new UiSwitch('input#ready-state', function(event, state) {if 
 jumpStateSwitch = new UiSwitch('input#jump-state', do_nothing);
 serverConnectedStateSwitch = new UiSwitch('input#server-connection-state', do_nothing);
 
-watersplasherSwitch = new UiSwitch('input#watersplasher-state', do_nothing);
-parachuteSwitch = new UiSwitch('input#parachute-state', do_nothing);
+watersplasherSwitch = new UiSwitch('input#watersplasher-state', vjAPI.setWatersplasher);
+parachuteSwitch = new UiSwitch('input#parachute-state', vjAPI.setParachute);
 
 updateWatch = function (watch) {
 	$('#watchdisplay').text(watch.toString());
