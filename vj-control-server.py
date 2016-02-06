@@ -12,22 +12,6 @@ from recordclass import recordclass
 from vj_serial import SerialPort
 
 
-## Initialize logger
-logging.config.fileConfig('log.ini')
-
-
-## See if GPIO is available
-try:
-	import RPi.GPIO as GPIO
-	HIGH = GPIO.HIGH
-	LOW = GPIO.LOW
-except ImportError, error:
-	GPIO = None
-	HIGH = 'HIGH'
-	LOW = 'LOW'
-	logging.critical("Couldn't import RPi.GPIO. Exception: %s", error)
-
-
 ## Parameters
 GPIO_FAN = 17
 GPIO_PARACHUTE = 27
@@ -57,8 +41,6 @@ JumpState = recordclass(
 
 
 ## Global variables
-led = None
-
 envState = EnvState(0, False, False)
 jumpState = JumpState(False, None)
 serial = SerialPort(SERIAL_NAME)
@@ -227,16 +209,10 @@ def set_fanspeed(speed):
 	# TODO Remove when working
 	socketio.emit('raspiFanEvent', speed, namespace="/events")
 
-	if led:
-		led.ChangeDutyCycle(int(envState.duty_cycle))
-	else:
-		logging.critical("No LED!")
-
 # Setter for parachute state
 def open_parachute():
 	logging.debug("Open parachute")
 
-	set_gpio(GPIO_PARACHUTE, HIGH)
 	serial.send_serial_command('P', 1)
 	envState.parachute_state = True
 	socketio.emit('raspiParachuteOpenEvent', None, namespace="/events")
@@ -244,7 +220,6 @@ def open_parachute():
 def close_parachute():
 	logging.debug("Close parachute")
 
-	set_gpio(GPIO_PARACHUTE, LOW)
 	serial.send_serial_command('P', 0)
 	envState.parachute_state = False
 	socketio.emit('raspiParachuteCloseEvent', None, namespace="/events")
@@ -253,7 +228,6 @@ def close_parachute():
 def watersplasher_on():
 	logging.debug("Watersplasher on")
 
-	set_gpio(GPIO_WATERSPLASHER, HIGH)
 	serial.send_serial_command('W', 1)
 	envState.watersplasher_state = True
 	socketio.emit('raspiWaterSplasherOnEvent', None, namespace="/events")
@@ -261,7 +235,6 @@ def watersplasher_on():
 def watersplasher_off():
 	logging.debug("Watersplasher off")
 
-	set_gpio(GPIO_WATERSPLASHER, LOW)
 	serial.send_serial_command('W', 0)
 	envState.watersplasher_state = False
 	socketio.emit('raspiWaterSplasherOffEvent', None, namespace="/events")
@@ -296,7 +269,8 @@ def main():
 	# Set locale for Flask
 	#locale.setlocale(locale.LC_ALL, '')
 
-	init_gpio()
+	## Initialize logger
+	logging.config.fileConfig('log.ini')
 
 	# Set debug option if desired
 	if "debug" in sys.argv:
@@ -314,14 +288,6 @@ def main():
 		pass
 	finally:
 		serial.close()
-
-		# Reset GPIO
-		logging.info("Cleanup GPIO")
-		try:
-			led.stop()
-			GPIO.cleanup()
-		except AttributeError, error:
-			logging.exception("Not able to clean up. Reason: %s", error)
 
 if __name__ == '__main__':
 	main()
