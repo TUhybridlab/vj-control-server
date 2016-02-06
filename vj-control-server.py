@@ -1,15 +1,14 @@
 #!/usr/bin/python
 import logging.config
 import locale
-import serial
 import signal
-import struct
 import sys
-import threading
 import time
 
 from flask import Flask, send_from_directory, jsonify, request
 from flask.ext.socketio import SocketIO, emit
+
+from vj_serial import SerialPort
 
 
 ## Initialize logger
@@ -56,9 +55,9 @@ duty_cycle = 0
 parachute_state = False
 watersplasher_state = False
 jump_started = False
-serial_port = None
-serial_lock = None
 start_time = None
+
+serial = SerialPort(SERIAL_NAME)
 
 
 ## Instanciate Flask (Static files and REST API)
@@ -205,65 +204,6 @@ def init_gpio():
 	except AttributeError, error:
 		logging.error("Not able to apply initial state to GPIO. Not on RPi? Reason: %s", error)
 
-
-## Serial console
-def init_serial():
-	global serial_port
-	global serial_lock
-
-	try:
-		# Init Serial port
-		serial_port = serial.Serial(SERIAL_NAME, timeout=1)
-		serial_port.flushInput()
-		serial_port.flushOutput()
-		serial_lock = threading.Lock()
-
-		# Start logger thread
-		log_thread = threading.Thread(target=log_port, args=(serial_port,))
-		log_thread.start()
-	except OSError, e:
-		serial_port = None
-		logging.error(str(e))
-	except serial.serialutil.SerialException, e:
-		serial_port = None
-		logging.error(str(e))
-
-	logging.debug("Serial: " + str(serial_port))
-
-def send_serial_command(command, value):
-	# Protocol: Start each message with 255 (= 0xFF)
-	if value > 254 or value < 0:
-		logging.error("Values allowed: 0 - 254!!! Not sending value %s", value)
-		return;
-
-	message = int2bin(255) + command + int2bin(value)
-	if (serial_port):
-		try:
-			serial_lock.acquire(True)
-			ret = serial_port.write(message)
-			logging.debug("Sent %s Bytes: %s being %s , %s",
-				ret, message, command, value)
-		finally:
-			serial_lock.release()
-	else:
-		logging.error("Not sending %s, %s - no serial port?", command, value)
-
-def int2bin(value):
-	return struct.pack('!B',value)
-
-def bin2int(value):
-	return struct.unpack('!B',value)[0]
-
-def log_port(ser):
-	if serial_port is not None:
-		serial_port.flushInput()
-	while serial_port is not None:
-		reading = ser.read()
-		if reading:
-			logging.debug("Received: %s, int: %s", reading, bin2int(reading))
-
-	logging.info("Closing logger")
-
 def set_gpio(pin, value):
 	if GPIO:
 		GPIO.output(pin, value)
@@ -278,7 +218,7 @@ def set_fanspeed(speed):
 
 	# Set PWM-DutyCycle of pin
 	duty_cycle = duty_cycle = min(max(speed, 0), 100)
-	send_serial_command('F', duty_cycle)
+	serial.send_serial_command('F', duty_cycle)
 
 	# TODO Remove when working
 	socketio.emit('raspiFanEvent', speed, namespace="/events")
@@ -293,15 +233,15 @@ def open_parachute():
 	logging.debug("Open parachute")
 
 	set_gpio(GPIO_PARACHUTE, HIGH)
-	send_serial_command('P', 1)
+	serial.send_serial_command('P', 1)
 	parachute_state = True
 	socketio.emit('raspiParachuteOpenEvent', None, namespace="/events")
 
 def close_parachute():
 	logging.debug("Close parachute")
 
-	send_serial_command('P', 0)
 	set_gpio(GPIO_PARACHUTE, LOW)
+	serial.send_serial_command('P', 0)
 	parachute_state = False
 	socketio.emit('raspiParachuteCloseEvent', None, namespace="/events")
 
@@ -309,8 +249,8 @@ def close_parachute():
 def watersplasher_on():
 	logging.debug("Watersplasher on")
 
-	send_serial_command('W', 1)
 	set_gpio(GPIO_WATERSPLASHER, HIGH)
+	serial.send_serial_command('W', 1)
 	watersplasher_state = True
 	socketio.emit('raspiWaterSplasherOnEvent', None, namespace="/events")
 
@@ -318,18 +258,18 @@ def watersplasher_off():
 	logging.debug("Watersplasher off")
 
 	set_gpio(GPIO_WATERSPLASHER, LOW)
-	send_serial_command('W', 0)
+	serial.send_serial_command('W', 0)
 	watersplasher_state = False
 	socketio.emit('raspiWaterSplasherOffEvent', None, namespace="/events")
 
 # Setter for start trigger
 def trigger_start():
 	if not jump_started:
-		send_serial_command('S', 1)
+		serial.send_serial_command('S', 1)
 		jump_started = True
 
 def reset_start_trigger():
-	send_serial_command('S', 0)
+	serial.send_serial_command('S', 0)
 	jump_started = False
 
 
@@ -353,7 +293,6 @@ def main():
 	#locale.setlocale(locale.LC_ALL, '')
 
 	init_gpio()
-	init_serial()
 
 	# Set debug option if desired
 	if "debug" in sys.argv:
@@ -370,11 +309,7 @@ def main():
 	except KeyboardInterrupt:
 		pass
 	finally:
-		# Close serial port
-		logging.info("Close serial port")
-		if serial_port is not None and serial_port.isOpen():
-			serial_port.close()
-			serial_port = None
+		serial.close()
 
 		# Reset GPIO
 		logging.info("Cleanup GPIO")
