@@ -222,6 +222,9 @@ def init_gpio():
 
 ## Serial console
 def init_serial():
+	global serial_port
+	global serial_lock
+
 	try:
 		# Init Serial port
 		serial_port = serial.Serial(SERIAL_NAME, timeout=1)
