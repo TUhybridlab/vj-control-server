@@ -7,6 +7,7 @@ import time
 
 from flask import Flask, send_from_directory, jsonify, request
 from flask.ext.socketio import SocketIO, emit
+from recordclass import recordclass
 
 from vj_serial import SerialPort
 
@@ -49,14 +50,17 @@ JUMP_STATE_URL = BASE_URL + "jumpState/"
 SERIAL_NAME = "/dev/ttyACM0"
 
 
+EnvState = recordclass(
+	'EnvState', ['duty_cycle', 'parachute_state', 'watersplasher_state'])
+JumpState = recordclass(
+	'JumpState', ['jump_started', 'start_time'])
+
+
 ## Global variables
 led = None
-duty_cycle = 0
-parachute_state = False
-watersplasher_state = False
-jump_started = False
-start_time = None
 
+envState = EnvState(0, False, False)
+jumpState = JumpState(False, None)
 serial = SerialPort(SERIAL_NAME)
 
 
@@ -95,19 +99,19 @@ def set_fan_speed_post():
 
 @app.route(FAN_URL, methods=['GET'])
 def get_fan_speed():
-	return jsonify({'speed': duty_cycle}), 200
+	return jsonify({'speed': envState.duty_cycle}), 200
 
 @app.route(PARACHUTE_URL, methods=['GET'])
 def get_parachute_state():
-	return jsonify({'parachute': parachute_state}), 200
+	return jsonify({'parachute': envState.parachute_state}), 200
 
 @app.route(WATERSPLASHER_URL, methods=['GET'])
 def get_watersplasher_state():
-	return jsonify({'watersplasher': watersplasher_state}), 200
+	return jsonify({'watersplasher': envState.watersplasher_state}), 200
 
 @app.route(JUMP_STATE_URL, methods=['GET'])
 def get_jump_state():
-	return jsonify({'jumpStarted': jump_started}), 200
+	return jsonify({'jumpStarted': jumpState.jump_started}), 200
 
 @app.route(EVENT_URL, methods=['POST'])
 def broadcast_event():
@@ -196,7 +200,7 @@ def init_gpio():
 
 		# Setup Fan debug LED
 		led = GPIO.PWM(GPIO_FAN, PWM_FREQUENCY)
-		led.start(duty_cycle)
+		led.start(envState.duty_cycle)
 
 		# Init parachute and watersplasher
 		GPIO.output(GPIO_PARACHUTE, LOW)
@@ -217,14 +221,14 @@ def set_fanspeed(speed):
 	logging.debug("Setting fanspeed to %s", speed)
 
 	# Set PWM-DutyCycle of pin
-	duty_cycle = duty_cycle = min(max(speed, 0), 100)
-	serial.send_serial_command('F', duty_cycle)
+	envState.duty_cycle = min(max(speed, 0), 100)
+	serial.send_serial_command('F', envState.duty_cycle)
 
 	# TODO Remove when working
 	socketio.emit('raspiFanEvent', speed, namespace="/events")
 
 	if led:
-		led.ChangeDutyCycle(int(duty_cycle))
+		led.ChangeDutyCycle(int(envState.duty_cycle))
 	else:
 		logging.critical("No LED!")
 
@@ -234,7 +238,7 @@ def open_parachute():
 
 	set_gpio(GPIO_PARACHUTE, HIGH)
 	serial.send_serial_command('P', 1)
-	parachute_state = True
+	envState.parachute_state = True
 	socketio.emit('raspiParachuteOpenEvent', None, namespace="/events")
 
 def close_parachute():
@@ -242,7 +246,7 @@ def close_parachute():
 
 	set_gpio(GPIO_PARACHUTE, LOW)
 	serial.send_serial_command('P', 0)
-	parachute_state = False
+	envState.parachute_state = False
 	socketio.emit('raspiParachuteCloseEvent', None, namespace="/events")
 
 # Setter for Watersplasher
@@ -251,7 +255,7 @@ def watersplasher_on():
 
 	set_gpio(GPIO_WATERSPLASHER, HIGH)
 	serial.send_serial_command('W', 1)
-	watersplasher_state = True
+	envState.watersplasher_state = True
 	socketio.emit('raspiWaterSplasherOnEvent', None, namespace="/events")
 
 def watersplasher_off():
@@ -259,18 +263,18 @@ def watersplasher_off():
 
 	set_gpio(GPIO_WATERSPLASHER, LOW)
 	serial.send_serial_command('W', 0)
-	watersplasher_state = False
+	envState.watersplasher_state = False
 	socketio.emit('raspiWaterSplasherOffEvent', None, namespace="/events")
 
 # Setter for start trigger
 def trigger_start():
-	if not jump_started:
+	if not jumpState.jump_started:
 		serial.send_serial_command('S', 1)
-		jump_started = True
+		jumpState.jump_started = True
 
 def reset_start_trigger():
 	serial.send_serial_command('S', 0)
-	jump_started = False
+	jumpState.jump_started = False
 
 
 # RasPi GPIO button callbacks
@@ -298,7 +302,7 @@ def main():
 	if "debug" in sys.argv:
 		app.debug = True
 
-	start_time = time.time()
+	jumpState.start_time = time.time()
 
 	try:
 		# Set signal handler for Shutdown
