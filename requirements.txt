@@ -1,20 +1,13 @@
-# As of 29th September 2015
+## Custom recipes
+Flask-SocketIO==2.7.1
+python-socketio==1.6.0
+python-engineio==1.0.3
+recordclass==0.4.1
+gevent==1.1.2
+gevent-websocket==0.9.5
 
-# Outdated
-  jinja2==2.7.3
-
-# New Beta available
-  flask-socketio==0.6.0
-  gevent==1.0
-
-# Up to date:
-  flask==0.10.1
-  itsdangerous==0.24
-  werkzeug==0.10.4
-  markupsafe==0.23
-  gevent-websocket==0.9.3
-  gevent-socketio==0.3.6
-
-# Any version
-  pyserial
-  recordclass
+## OpenEmbedded recipes
+pyserial==3.1.1
+flask==0.11.1
+werkzeug==0.11.10
+six==1.10.0
