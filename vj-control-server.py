@@ -153,50 +153,6 @@ def unity_watersplasher_off(message):
 	watersplasher_off()
 
 
-## Raspberry GPIO
-# Init
-def init_gpio():
-	global led
-
-	try:
-		GPIO.setmode(GPIO.BCM)
-
-		# Setup PWM for fan control
-		GPIO.setup(GPIO_FAN, GPIO.OUT)
-
-		# Setup button for start detection
-		GPIO.setup(GPIO_BUTTON_START, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-		GPIO.add_event_detect(GPIO_BUTTON_START, GPIO.FALLING)
-		GPIO.add_event_callback(GPIO_BUTTON_START, start_button_event_handler)
-
-		# Setup button for ready-state detection
-		GPIO.setup(GPIO_BUTTON_READY, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-		GPIO.add_event_detect(GPIO_BUTTON_READY, GPIO.FALLING)
-		GPIO.add_event_callback(GPIO_BUTTON_READY, ready_button_event_handler)
-
-		# Setup output for parachute
-		GPIO.setup(GPIO_PARACHUTE, GPIO.OUT)
-
-		# Setup output for water splasher
-		GPIO.setup(GPIO_WATERSPLASHER, GPIO.OUT)
-
-		# Setup Fan debug LED
-		led = GPIO.PWM(GPIO_FAN, PWM_FREQUENCY)
-		led.start(envState.duty_cycle)
-
-		# Init parachute and watersplasher
-		GPIO.output(GPIO_PARACHUTE, LOW)
-		GPIO.output(GPIO_WATERSPLASHER, LOW)
-	except AttributeError, error:
-		logging.error("Not able to apply initial state to GPIO. Not on RPi? Reason: %s", error)
-
-def set_gpio(pin, value):
-	if GPIO:
-		GPIO.output(pin, value)
-	else:
-		logging.error('Cannot set pin %i to %s!', pin, value)
-
-
 ## Helpers
 # Setter for fan speed
 def set_fanspeed(speed):
