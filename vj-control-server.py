@@ -6,7 +6,7 @@ import sys
 import time
 
 from flask import Flask, send_from_directory, jsonify, request
-from flask.ext.socketio import SocketIO, emit
+from flask_socketio import SocketIO, emit
 from recordclass import recordclass
 
 from vj_serial import SerialPort
