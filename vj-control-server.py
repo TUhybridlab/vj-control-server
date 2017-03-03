@@ -31,7 +31,7 @@ EVENT_URL = BASE_URL + "events/"
 JUMP_STATE_URL = BASE_URL + "jumpState/"
 
 ## Serial communication with Arduino
-SERIAL_NAME = "/dev/ttyACM0"
+SERIAL_NAME = "/dev/ttyUSB0"
 
 
 EnvState = recordclass(

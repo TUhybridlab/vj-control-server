@@ -108,7 +108,8 @@ FanSlider = function(vjAPI) {
 			// Initilaize slider with value
 			$( "#slider" ).slider({
 				value: data.speed,
-				step: 10
+				max: 16,
+				step: 1
 			});
 
 			// Set speed with slider
@@ -122,7 +123,7 @@ FanSlider = function(vjAPI) {
 	self.setSlider = function(speed) {
 		self.onChangeCallbackEnabled = false;
 		$( "#slider" ).slider( "option", "value", speed);
-		$("#slider_value").text(speed + "%");
+		$("#slider_value").text("Level " + speed);
 		self.onChangeCallbackEnabled = true;
 	}
 

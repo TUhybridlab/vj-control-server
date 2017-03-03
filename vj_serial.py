@@ -31,17 +31,15 @@ class SerialPort(object):
 		logging.debug("Serial: %s", self.serial_port)
 
 	def send_serial_command(self, command, value):
-		# Protocol: Start each message with 255 (= 0xFF)
-		if value > 254 or value < 0:
-			logging.error("Values allowed: 0 - 254!!! Not sending value %s", value)
-			return
+		message = self.int2bin(0xF6) + self.int2bin(0x6F) + self.int2bin(0x04) + self.int2bin(0x00) + self.int2bin(value)
 
-		message = self.int2bin(255) + command + self.int2bin(value)
 		if self.serial_port:
 			try:
 				self.serial_lock.acquire(True)
 				ret = self.serial_port.write(message)
-				logging.debug("Sent %s Bytes: %s being %s , %s", ret, message, command, value)
+				logging.debug("Sent %s Bytes, being", ret)
+				for x in message:
+					logging.debug("%s", self.bin2int(x))
 			finally:
 				self.serial_lock.release()
 		else:
