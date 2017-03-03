@@ -18,9 +18,6 @@ class SerialPort(object):
 			self.serial_port.flushOutput()
 			self.serial_lock = threading.Lock()
 
-			# Start logger thread
-			self.log_thread = threading.Thread(target=self.log_port, args=(self.serial_port,))
-			self.log_thread.start()
 		except OSError, error:
 			self.serial_port = None
 			logging.error("Cannot initialize. Reason: %s", error)
@@ -52,16 +49,6 @@ class SerialPort(object):
 	@staticmethod
 	def bin2int(value):
 		return struct.unpack('!B', value)[0]
-
-	def log_port(self, ser):
-		if self.serial_port is not None:
-			self.serial_port.flushInput()
-		while self.serial_port is not None:
-			reading = ser.read()
-			if reading:
-				logging.debug("Received: %s, int: %s", reading, self.bin2int(reading))
-
-		logging.info("Closing logger")
 
 	def close(self):
 		# Close serial port
