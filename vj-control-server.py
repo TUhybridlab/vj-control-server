@@ -43,7 +43,7 @@ JumpState = recordclass(
 ## Global variables
 envState = EnvState(0, False, False)
 jumpState = JumpState(False, None)
-serial = SerialPort(SERIAL_NAME)
+serial = None
 
 
 ## Instanciate Flask (Static files and REST API)
@@ -222,11 +222,16 @@ def sigTermHandler(signum, frame):
 
 ## Main - Start Flask server through SocketIO for websocket support
 def main():
+	global serial
+
 	# Set locale for Flask
 	#locale.setlocale(locale.LC_ALL, '')
 
 	## Initialize logger
 	logging.config.fileConfig('log.ini')
+
+	# Init serial port
+	serial = SerialPort(SERIAL_NAME)
 
 	# Set debug option if desired
 	if "debug" in sys.argv:
