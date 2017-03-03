@@ -3,24 +3,28 @@ import struct
 import threading
 
 import serial
+import serial.tools.list_ports
 
 
 class SerialPort(object):
 	def __init__(self, port_name):
+		self.port_name = port_name
 		self.serial_port = None
 		self.serial_lock = None
 		self.log_thread = None
 
+		self.serial_lock = threading.Lock()
+		self.initSerialPort()
+
+	def initSerialPort(self):
+		port_device = self.get_serial_port_device()
+		logging.info("Initializing port %s", port_device)
 		try:
 			# Init Serial port
-			self.serial_port = serial.Serial(port_name, timeout=1)
+			self.serial_port = serial.Serial(port_device, timeout=1, baudrate=115200)
 			self.serial_port.flushInput()
 			self.serial_port.flushOutput()
-			self.serial_lock = threading.Lock()
 
-			# Start logger thread
-			self.log_thread = threading.Thread(target=self.log_port, args=(self.serial_port,))
-			self.log_thread.start()
 		except OSError, error:
 			self.serial_port = None
 			logging.error("Cannot initialize. Reason: %s", error)
@@ -30,22 +34,38 @@ class SerialPort(object):
 
 		logging.debug("Serial: %s", self.serial_port)
 
-	def send_serial_command(self, command, value):
-		# Protocol: Start each message with 255 (= 0xFF)
-		if value > 254 or value < 0:
-			logging.error("Values allowed: 0 - 254!!! Not sending value %s", value)
-			return
+	def _send_serial_command(self, command, value):
+		message = self.int2bin(0xF6) + self.int2bin(0x6F) + self.int2bin(0x04) + self.int2bin(0x00) + self.int2bin(value)
 
-		message = self.int2bin(255) + command + self.int2bin(value)
 		if self.serial_port:
 			try:
 				self.serial_lock.acquire(True)
 				ret = self.serial_port.write(message)
-				logging.debug("Sent %s Bytes: %s being %s , %s", ret, message, command, value)
+				logging.debug("Sent %s Bytes, being", ret)
+				for x in message:
+					logging.debug("%s", self.bin2int(x))
 			finally:
 				self.serial_lock.release()
 		else:
 			logging.error("Not sending %s, %s - no serial port?", command, value)
+
+	def send_serial_command(self, command, value):
+		if not self.serial_port:
+			self.initSerialPort()
+
+		if self.serial_port:
+			try:
+				self._send_serial_command(command, value)
+			except IOError:
+				self.initSerialPort()
+				self._send_serial_command(command, value)
+
+	def get_serial_port_device(self):
+		ports = serial.tools.list_ports.grep(self.port_name)
+		try:
+			return ports.next().device
+		except StopIteration:
+			return None
 
 	@staticmethod
 	def int2bin(value):
@@ -54,16 +74,6 @@ class SerialPort(object):
 	@staticmethod
 	def bin2int(value):
 		return struct.unpack('!B', value)[0]
-
-	def log_port(self, ser):
-		if self.serial_port is not None:
-			self.serial_port.flushInput()
-		while self.serial_port is not None:
-			reading = ser.read()
-			if reading:
-				logging.debug("Received: %s, int: %s", reading, self.bin2int(reading))
-
-		logging.info("Closing logger")
 
 	def close(self):
 		# Close serial port

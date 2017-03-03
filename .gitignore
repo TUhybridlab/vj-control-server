@@ -1,0 +1,12 @@
+## Python stuff
+*.pyc
+
+## PyCharm stuff
+.idea
+
+## Vim
+*.swp
+
+## Log files
+*.log
+
