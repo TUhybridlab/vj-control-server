@@ -159,7 +159,7 @@ def set_fanspeed(speed):
 	logging.debug("Setting fanspeed to %s", speed)
 
 	# Set PWM-DutyCycle of pin
-	envState.duty_cycle = min(max(speed, 0), 100)
+	envState.duty_cycle = min(max(speed, 0), 16)
 	serial.send_serial_command('F', envState.duty_cycle)
 
 	# TODO Remove when working
