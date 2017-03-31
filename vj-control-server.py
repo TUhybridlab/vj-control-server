@@ -150,16 +150,6 @@ def unity_watersplasher(message):
 	else:
 		watersplasher_off()
 
-@socketio.on('unityWaterSplasherOnEvent', namespace='/events')
-def unity_watersplasher_on(message):
-	logging.info("Got watersplasher-on: %s", message)
-	watersplasher_on()
-
-@socketio.on('unityWaterSplasherOffEvent', namespace='/events')
-def unity_watersplasher_off(message):
-	logging.info("Got watersplasher-off: %s", message)
-	watersplasher_off()
-
 
 ## Helpers
 # Setter for fan speed
