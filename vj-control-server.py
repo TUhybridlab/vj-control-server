@@ -22,6 +22,8 @@ PWM_FREQUENCY = 1000
 GPIO_BUTTON_START = 23
 GPIO_BUTTON_READY = 24
 
+MAX_WATERSPLASHER_DURATION = 10
+
 ## REST API URLs
 BASE_URL = "/"
 FAN_URL = BASE_URL + "fan/"
@@ -179,11 +181,16 @@ def close_parachute():
 	socketio.emit('raspiParachuteCloseEvent', None, namespace="/events")
 
 # Setter for Watersplasher
+def stop_watersplasher_task(duration=MAX_WATERSPLASHER_DURATION):
+	socketio.sleep(duration)
+	watersplasher_off()
+
 def watersplasher_on():
 	logging.debug("Watersplasher on")
 
 	serial.send_serial_command('W', 16)
 	envState.watersplasher_state = True
+	socketio.start_background_task(stop_watersplasher_task)
 	socketio.emit('raspiWaterSplasherOnEvent', None, namespace="/events")
 
 def watersplasher_off():
