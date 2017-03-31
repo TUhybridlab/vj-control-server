@@ -46,6 +46,7 @@ JumpState = recordclass(
 envState = EnvState(0, False, False)
 jumpState = JumpState(False, None)
 serial = None
+activeWaterStopThread = 0
 
 
 ## Instanciate Flask (Static files and REST API)
@@ -181,16 +182,28 @@ def close_parachute():
 	socketio.emit('raspiParachuteCloseEvent', None, namespace="/events")
 
 # Setter for Watersplasher
-def stop_watersplasher_task(duration=MAX_WATERSPLASHER_DURATION):
+def stop_watersplasher_task(threadId, duration=MAX_WATERSPLASHER_DURATION):
+	global activeWaterStopThread
+
 	socketio.sleep(duration)
-	watersplasher_off()
+	if activeWaterStopThread == threadId:
+		watersplasher_off()
+		activeWaterStopThread = 0
+	else:
+		logging.info("Not closing, active one is %s", activeWaterStopThread)
 
 def watersplasher_on():
+	global activeWaterStopThread
+
 	logging.debug("Watersplasher on")
 
 	serial.send_serial_command('W', 16)
 	envState.watersplasher_state = True
-	socketio.start_background_task(stop_watersplasher_task)
+
+	activeWaterStopThread += 1
+	socketio.start_background_task(stop_watersplasher_task, activeWaterStopThread)
+	logging.info("Starting stopper thread: %s", activeWaterStopThread)
+
 	socketio.emit('raspiWaterSplasherOnEvent', None, namespace="/events")
 
 def watersplasher_off():
