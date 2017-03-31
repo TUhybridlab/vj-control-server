@@ -5,6 +5,10 @@ import threading
 import serial
 import serial.tools.list_ports
 
+COMMAND_TO_CHANNEL = {
+	'F': 0x00,
+	'W': 0x01
+}
 
 class SerialPort(object):
 	def __init__(self, port_name):
@@ -35,7 +39,11 @@ class SerialPort(object):
 		logging.debug("Serial: %s", self.serial_port)
 
 	def _send_serial_command(self, command, value):
-		message = self.int2bin(0xF6) + self.int2bin(0x6F) + self.int2bin(0x04) + self.int2bin(0x00) + self.int2bin(value)
+		if command not in COMMAND_TO_CHANNEL:
+			logging.error("Unknown command: %s", command)
+			return;
+
+		message = self.int2bin(0xF6) + self.int2bin(0x6F) + self.int2bin(0x04) + self.int2bin(COMMAND_TO_CHANNEL[command]) + self.int2bin(value)
 
 		if self.serial_port:
 			try:

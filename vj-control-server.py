@@ -142,6 +142,14 @@ def unity_fanspeed(message):
 	logging.info("Got fanspeed: %s", message)
 	set_fanspeed(int(message))
 
+@socketio.on('unityWaterSplasherEvent', namespace='/events')
+def unity_watersplasher(message):
+	logging.info("Got watersplasher: %s", message)
+	if (int(message) == 1):
+		watersplasher_on()
+	else:
+		watersplasher_off()
+
 @socketio.on('unityWaterSplasherOnEvent', namespace='/events')
 def unity_watersplasher_on(message):
 	logging.info("Got watersplasher-on: %s", message)
@@ -184,7 +192,7 @@ def close_parachute():
 def watersplasher_on():
 	logging.debug("Watersplasher on")
 
-	serial.send_serial_command('W', 1)
+	serial.send_serial_command('W', 16)
 	envState.watersplasher_state = True
 	socketio.emit('raspiWaterSplasherOnEvent', None, namespace="/events")
 

@@ -68,9 +68,9 @@ VjControlAPI = function() {
 
 	self.setWatersplasher = function(event, state) {
 		if (state)
-			eventSocket.emit('unityWaterSplasherOnEvent', '');
+			eventSocket.emit('unityWaterSplasherEvent', '1');
 		else
-			eventSocket.emit('unityWaterSplasherOffEvent', '');
+			eventSocket.emit('unityWaterSplasherEvent', '0');
 	}
 
 	self.setParachute = function(event, state) {
