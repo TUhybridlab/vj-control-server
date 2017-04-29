@@ -148,7 +148,7 @@ def unity_fanspeed(message):
 @socketio.on('unityWaterSplasherEvent', namespace='/events')
 def unity_watersplasher(message):
 	logging.info("Got watersplasher: %s", message)
-	if (int(message) == 1):
+	if int(message) == 1:
 		watersplasher_on()
 	else:
 		watersplasher_off()

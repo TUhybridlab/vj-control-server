@@ -10,6 +10,7 @@ COMMAND_TO_CHANNEL = {
 	'W': 0x01
 }
 
+
 class SerialPort(object):
 	def __init__(self, port_name):
 		self.port_name = port_name
@@ -29,10 +30,7 @@ class SerialPort(object):
 			self.serial_port.flushInput()
 			self.serial_port.flushOutput()
 
-		except OSError, error:
-			self.serial_port = None
-			logging.error("Cannot initialize. Reason: %s", error)
-		except serial.serialutil.SerialException, error:
+		except (OSError, serial.serialutil.SerialException) as error:
 			self.serial_port = None
 			logging.error("Cannot initialize. Reason: %s", error)
 
@@ -41,7 +39,7 @@ class SerialPort(object):
 	def _send_serial_command(self, command, value):
 		if command not in COMMAND_TO_CHANNEL:
 			logging.error("Unknown command: %s", command)
-			return;
+			return
 
 		message = self.int2bin(0xF6) + self.int2bin(0x6F) + self.int2bin(0x04) + self.int2bin(COMMAND_TO_CHANNEL[command]) + self.int2bin(value)
 
