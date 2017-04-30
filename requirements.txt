@@ -12,3 +12,4 @@
 
 # Dev only dependencies
   fakeRPiGPIO
+  dummyserial

@@ -31,8 +31,10 @@ class SerialPort(object):
 			self.serial_port.flushOutput()
 
 		except (OSError, serial.serialutil.SerialException) as error:
-			self.serial_port = None
 			logging.error("Cannot initialize. Reason: %s", error)
+			from vjdummyserial import VjDummySerial
+			self.serial_port = VjDummySerial(port_device)
+			logging.error("Running on dummy serial")
 
 		logging.debug("Serial: %s", self.serial_port)
 
