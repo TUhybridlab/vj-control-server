@@ -22,6 +22,7 @@ PWM_FREQUENCY = 1000
 GPIO_BUTTON_START = 23
 GPIO_BUTTON_READY = 24
 
+WATERSPLASHER_DUTY_CYCLE = 0.25
 MAX_WATERSPLASHER_DURATION = 10
 
 ## REST API URLs
@@ -197,8 +198,7 @@ def watersplasher_on():
 
 	logging.debug("Watersplasher on")
 
-	serial.send_serial_command('W', 16)
-	envState.watersplasher_state = True
+	socketio.start_background_task(watersplasher_task)
 
 	activeWaterStopThread += 1
 	socketio.start_background_task(stop_watersplasher_task, activeWaterStopThread)
@@ -206,10 +206,18 @@ def watersplasher_on():
 
 	socketio.emit('raspiWaterSplasherOnEvent', None, namespace="/events")
 
+def watersplasher_task():
+	if not envState.watersplasher_state:
+		envState.watersplasher_state = True
+		while envState.watersplasher_state:
+			serial.send_serial_command('W', 16)
+			socketio.sleep(WATERSPLASHER_DUTY_CYCLE)
+			serial.send_serial_command('W', 0)
+			socketio.sleep(1 - WATERSPLASHER_DUTY_CYCLE)
+
 def watersplasher_off():
 	logging.debug("Watersplasher off")
 
-	serial.send_serial_command('W', 0)
 	envState.watersplasher_state = False
 	socketio.emit('raspiWaterSplasherOffEvent', None, namespace="/events")
 
