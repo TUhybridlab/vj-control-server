@@ -1,6 +1,5 @@
 #!/usr/bin/python
 import logging.config
-import locale
 import signal
 import sys
 import time
@@ -61,14 +60,9 @@ socketio = SocketIO(app)
 def index():
 	return send_from_directory('static', 'index.html')
 
-@app.route(BASE_URL + 'css/<path:path>')
-def static_css_proxy(path):
-	return send_from_directory('static/css/', path)
-
-@app.route(BASE_URL + 'js/<path:path>')
-def static_js_proxy(path):
-	return send_from_directory('static/js/', path)
-
+@app.route(BASE_URL + '<path:path>')
+def static_proxy(path):
+	return send_from_directory('static/', path)
 
 ## REST API
 @app.route(FAN_URL + '<int:speed>', methods=['PUT', 'GET'])

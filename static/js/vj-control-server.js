@@ -1,23 +1,21 @@
-FAN_URL="/fan/"
-PARACHUTE_URL="/parachute/"
-WATERSPLASHER_URL = "/watersplasher/"
-EVENT_URL="/events/"
-JUMP_STATE_URL="/jumpState/"
+FAN_URL="/fan/";
+PARACHUTE_URL="/parachute/";
+WATERSPLASHER_URL = "/watersplasher/";
+EVENT_URL="/events/";
+JUMP_STATE_URL="/jumpState/";
 
-
-do_nothing = function() {}
+do_nothing = function() {};
 
 default_error = function (jqXHR) {
 			console.log("ajax error " + jqXHR.status);
-			serverDown = true;
-}
+};
 
 log = function(msg) {
-	time = new Date().timeNow();
+	var time = new Date().timeNow();
 	$('#log').prepend('<p>'+ time + ' - '+ msg + '</p>');
-}
+};
 
-ajax_json = function(uri, method, request_data, is_async, success_callback, error_callback) {
+ajax_json = function(uri, method, request_data, is_async, success_callback) {
 	var request = {
 		url: uri,
 		type: method,
@@ -27,20 +25,44 @@ ajax_json = function(uri, method, request_data, is_async, success_callback, erro
 		dataType: 'json',
 		async: is_async,
 		success: function(data) {
-			serverDown = false;
 			success_callback(data);
 		},
 		error: function(jqXHR) {
 			default_error(jqXHR);
-			error_callback();
 		}
 	};
 
-	if (request_data != null)
+	if (!request_data)
 		request.data = JSON.stringify(request_data);
 
 	return $.ajax(request);
-}
+};
+
+
+VjControlAPI = function() {
+	var self = this;
+
+	self.setFanSpeed = function(speed_percentage) {
+		eventSocket.emit('unityFanSpeedEvent', speed_percentage);
+	};
+
+	self.setWatersplasher = function(state) {
+		if (state)
+			eventSocket.emit('unityWaterSplasherEvent', '1');
+		else
+			eventSocket.emit('unityWaterSplasherEvent', '0');
+	};
+
+	self.getFanSpeed = function() {
+		ajax_json(FAN_URL, "GET", null, true, function(data) { fanSlider.setSlider(data.speed); });
+	};
+
+	self.getWatersplasherState = function() {
+		ajax_json(WATERSPLASHER_URL, "GET", null, true, function(data) { watersplasherSwitch.setSwitchState(data.watersplasher); });
+	};
+
+	return self;
+};
 
 UiSwitch = function(id, onStateChanged) {
 	var self = this;
@@ -48,90 +70,44 @@ UiSwitch = function(id, onStateChanged) {
 	self.uiSwitch = $(id);
 
 	self.setSwitchState = function(state) {
-		self.uiSwitch.bootstrapSwitch('state', state, true);
-	}
+		self.uiSwitch.prop('checked', state);
+	};
 
-	self.uiSwitch.bootstrapSwitch('state', false, true);
-	self.uiSwitch.on('switchChange.bootstrapSwitch', function(event, state) {
-		onStateChanged(event, state);
+	self.uiSwitch.change(function(event) {
+		onStateChanged(event.target.checked);
 	});
 
 	return self;
-}
+};
 
-VjControlAPI = function() {
+UiSlider = function(id, onValueChanged) {
 	var self = this;
-
-	self.setFanSpeed = function(speed_percentage) {
-		eventSocket.emit('unityFanSpeedEvent', speed_percentage);
-	}
-
-	self.setWatersplasher = function(event, state) {
-		if (state)
-			eventSocket.emit('unityWaterSplasherEvent', '1');
-		else
-			eventSocket.emit('unityWaterSplasherEvent', '0');
-	}
-
-	self.setParachute = function(event, state) {
-		if (state)
-			eventSocket.emit('unityParachuteOpenEvent', '');
-		else
-			eventSocket.emit('unityResetLevel', '');
-	}
-
-	self.getFanSpeed = function() {
-		ajax_json(FAN_URL, "GET", null, true, do_nothing, do_nothing).done(function(data) { self.setSlider(data.speed); });
-	}
-
-	self.getParachuteState = function() {
-		ajax_json(PARACHUTE_URL, "GET", null, true, function(data) { parachuteSwitch.setSwitchState(data.parachute); });
-	}
-
-	self.getWatersplasherState = function() {
-		ajax_json(WATERSPLASHER_URL, "GET", null, true, function(data) { watersplasherSwitch.setSwitchState(data.watersplasher); });
-	}
-
-	self.getJumpState = function() {
-		ajax_json(JUMP_STATE_URL, "GET", null, true, function(data) { jumpStateSwitch.setSwitchState(data.jumpStarted); });
-	}
-
-	return self;
-}
-
-FanSlider = function(vjAPI) {
-	var self = this;
-	self.onChangeCallbackEnabled = true;
+	self.id = id;
+	self.slider = $(id);
 
 	self.initSlider = function () {
 		ajax_json(FAN_URL, "GET", null, false, do_nothing, do_nothing).done(function(data) {
 			// Initilaize slider with value
-			$( "#slider" ).slider({
-				value: data.speed,
-				max: 16,
-				step: 1
-			});
+			self.setSlider(data.speed);
 
 			// Set speed with slider
-			$( "#slider" ).on( "slidechange", function( event, ui ) {
-				if (self.onChangeCallbackEnabled)
-					vjAPI.setFanSpeed($( "#slider" ).slider( "value" ));
+			self.slider.change(function(event) {
+				onValueChanged(event.target.value);
 			});
 		});
-	}
+	};
 
 	self.setSlider = function(speed) {
-		self.onChangeCallbackEnabled = false;
-		$( "#slider" ).slider( "option", "value", speed);
 		$("#slider_value").text("Level " + speed);
-		self.onChangeCallbackEnabled = true;
-	}
+		return self.slider.val(speed);
+	};
 
-
-	self.initSlider();
+	self.off = function () {
+		self.setSlider(0).change();
+    };
 
 	return self;
-}
+};
 
 EventSocket = function(){
 	var ret = io.connect('http://' + document.domain + ':' + location.port + '/events');
@@ -142,10 +118,8 @@ EventSocket = function(){
 	ret.on('connect', function(msg) {
 		log('[INFO] Socket connected.');
 		serverConnectedStateSwitch.setSwitchState(true);
-		vjAPI.getFanSpeed();
-		vjAPI.getParachuteState();
+		fanSlider.initSlider();
 		vjAPI.getWatersplasherState();
-		vjAPI.getJumpState();
 	});
 
 	ret.on('disconnect', function(msg) {
@@ -156,9 +130,9 @@ EventSocket = function(){
 	// Receive fan event from server
 	ret.on('raspiFanEvent', function(msg) {
 		fanSlider.setSlider(msg);
-		if (previousFanSpeed != msg) {
+		if (self.previousFanSpeed !== msg) {
 			log('[DEBUG] Set fan slider to ' + msg);
-			previousFanSpeed = msg;
+			self.previousFanSpeed = msg;
 		}
 	});
 
@@ -211,28 +185,16 @@ EventSocket = function(){
 	});
 
 	return ret;
-}
+};
 
 vjAPI = VjControlAPI();
-fanSlider = FanSlider(vjAPI);
 eventSocket = EventSocket(vjAPI);
 
-
-readyStateSwitch = new UiSwitch('input#ready-state', function(event, state) {if (state) eventSocket.emit('unityReadyEvent', '[DEBUG] Unity ready!'); else eventSocket.emit('unityResetLevel', '[DEBUG] Reset level');});
-jumpStateSwitch = new UiSwitch('input#jump-state', do_nothing);
 serverConnectedStateSwitch = new UiSwitch('input#server-connection-state', do_nothing);
-
+fanSlider = UiSlider('input#fan-slider', vjAPI.setFanSpeed);
 watersplasherSwitch = new UiSwitch('input#watersplasher-state', vjAPI.setWatersplasher);
-parachuteSwitch = new UiSwitch('input#parachute-state', vjAPI.setParachute);
-
-updateWatch = function (watch) {
-	$('#watchdisplay').text(watch.toString());
-	console.log("Updating watch");
-};
-myWatch = new Stopwatch(updateWatch, 100);
-
 
 // For the time now
 Date.prototype.timeNow = function () {
 	return ((this.getHours() < 10)?"0":"") + this.getHours() +":"+ ((this.getMinutes() < 10)?"0":"") + this.getMinutes() +":"+ ((this.getSeconds() < 10)?"0":"") + this.getSeconds();
-}
+};
