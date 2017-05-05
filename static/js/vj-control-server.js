@@ -109,6 +109,37 @@ UiSlider = function(id, onValueChanged) {
 	return self;
 };
 
+WatersplasherUiSlider = function(id, onValueChanged) {
+	var self = this;
+	self.id = id;
+	self.slider = $(id);
+	self.onValueChanged = onValueChanged;
+
+	self.initSlider = function () {
+		console.log("Initializing");
+		ajax_json(WATERSPLASHER_URL, "GET", null, false, do_nothing, do_nothing).done(function(data) {
+			// Initilaize slider with value
+			console.log("Setting slider to " + data.intensity);
+			self.setSlider(data.intensity);
+
+			// Set speed with slider
+			self.slider.change(function(event) {
+				self.onValueChanged(event.target.value);
+			});
+		});
+	};
+
+	self.setSlider = function(speed) {
+		return self.slider.val(speed);
+	};
+
+	self.off = function () {
+		self.setSlider(0).change();
+    };
+
+	return self;
+};
+
 EventSocket = function(){
 	var ret = io.connect('http://' + document.domain + ':' + location.port + '/events');
 
@@ -187,12 +218,33 @@ EventSocket = function(){
 	return ret;
 };
 
+ConfigSocket = function () {
+	var ret = io.connect('http://' + document.domain + ':' + location.port + '/config');
+
+	ret.on('connect', function(msg) {
+		watersplasherIntensitySlider.initSlider();
+	});
+
+	ret.setWatersplasherIntensity = function(intensity) {
+		log('[DEBUG] Setting watersplasher intensity to ' + intensity);
+		ret.emit('waterSplasherDutyCycle', intensity);
+	};
+
+	return ret;
+};
+
 vjAPI = VjControlAPI();
 eventSocket = EventSocket(vjAPI);
+configSocket = ConfigSocket();
 
 serverConnectedStateSwitch = new UiSwitch('input#server-connection-state', do_nothing);
 fanSlider = UiSlider('input#fan-slider', vjAPI.setFanSpeed);
 watersplasherSwitch = new UiSwitch('input#watersplasher-state', vjAPI.setWatersplasher);
+watersplasherIntensitySlider = new WatersplasherUiSlider('input#watersplasher-intensity-slider', configSocket.setWatersplasherIntensity);
+
+initSequence = function () {
+	configSocket.emit('initSequence');
+};
 
 // For the time now
 Date.prototype.timeNow = function () {
