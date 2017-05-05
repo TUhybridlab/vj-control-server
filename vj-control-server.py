@@ -38,13 +38,13 @@ SERIAL_NAME = "/dev/ttyUSB"
 
 
 EnvState = recordclass(
-	'EnvState', ['duty_cycle', 'parachute_state', 'watersplasher_state'])
+	'EnvState', ['duty_cycle', 'parachute_state', 'watersplasher_state', 'watersplasher_intensity'])
 JumpState = recordclass(
 	'JumpState', ['jump_started', 'start_time'])
 
 
 ## Global variables
-envState = EnvState(0, False, False)
+envState = EnvState(0, False, False, WATERSPLASHER_DUTY_CYCLE)
 jumpState = JumpState(False, None)
 serial = None
 activeWaterStopThread = 0
@@ -93,7 +93,10 @@ def get_parachute_state():
 
 @app.route(WATERSPLASHER_URL, methods=['GET'])
 def get_watersplasher_state():
-	return jsonify({'watersplasher': envState.watersplasher_state}), 200
+	return jsonify({
+		'watersplasher': envState.watersplasher_state,
+		'intensity': envState.watersplasher_intensity
+	}), 200
 
 @app.route(JUMP_STATE_URL, methods=['GET'])
 def get_jump_state():
@@ -154,6 +157,19 @@ def unity_watersplasher(message):
 	else:
 		watersplasher_off()
 
+# Config
+@socketio.on('initSequence', namespace='/config')
+def init_sequnce(_ = None):
+	set_fan_speed(16)
+	socketio.sleep(5)
+	watersplasher_on(5)
+	socketio.sleep(5)
+	set_fan_speed(0)
+
+@socketio.on('waterSplasherDutyCycle', namespace='/config')
+def set_watersplasher_duty_cycle(duty_cycle):
+	logging.info("Setting watersplasher to " + duty_cycle)
+	envState.watersplasher_intensity = float(duty_cycle)
 
 ## Helpers
 # Setter for fan speed
@@ -183,7 +199,7 @@ def close_parachute():
 	socketio.emit('raspiParachuteCloseEvent', None, namespace="/events")
 
 # Setter for Watersplasher
-def stop_watersplasher_task(threadId, duration=MAX_WATERSPLASHER_DURATION):
+def stop_watersplasher_task(threadId, duration):
 	global activeWaterStopThread
 
 	socketio.sleep(duration)
@@ -193,27 +209,30 @@ def stop_watersplasher_task(threadId, duration=MAX_WATERSPLASHER_DURATION):
 	else:
 		logging.info("Not closing, active one is %s", activeWaterStopThread)
 
-def watersplasher_on():
+def watersplasher_on(duration = MAX_WATERSPLASHER_DURATION):
 	global activeWaterStopThread
 
 	logging.debug("Watersplasher on")
 
-	socketio.start_background_task(watersplasher_task)
+	socketio.start_background_task(watersplasher_task, envState.watersplasher_intensity)
 
 	activeWaterStopThread += 1
-	socketio.start_background_task(stop_watersplasher_task, activeWaterStopThread)
+	socketio.start_background_task(stop_watersplasher_task, activeWaterStopThread, duration)
 	logging.info("Starting stopper thread: %s", activeWaterStopThread)
 
 	socketio.emit('raspiWaterSplasherOnEvent', None, namespace="/events")
 
-def watersplasher_task():
+def watersplasher_task(duty_cycle = WATERSPLASHER_DUTY_CYCLE):
 	if not envState.watersplasher_state:
 		envState.watersplasher_state = True
 		while envState.watersplasher_state:
 			serial.send_serial_command('W', 16)
-			socketio.sleep(WATERSPLASHER_DUTY_CYCLE)
-			serial.send_serial_command('W', 0)
-			socketio.sleep(1 - WATERSPLASHER_DUTY_CYCLE)
+			socketio.sleep(duty_cycle)
+			if duty_cycle < 1:
+				serial.send_serial_command('W', 0)
+				socketio.sleep(1 - duty_cycle)
+
+		serial.send_serial_command('W', 0)
 
 def watersplasher_off():
 	logging.debug("Watersplasher off")
