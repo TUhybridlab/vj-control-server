@@ -172,8 +172,12 @@ def config_changed():
 def init_sequnce(_ = None):
 	set_fanspeed(16)
 	socketio.sleep(5)
+	tmp = config.watersplasher_intensity
+	config.watersplasher_intensity = 1
 	watersplasher_on(5)
 	socketio.sleep(5)
+	config.watersplasher_intensity = tmp
+	socketio.sleep(2)
 	set_fanspeed(0)
 
 @socketio.on('waterSplasherDutyCycle', namespace='/config')

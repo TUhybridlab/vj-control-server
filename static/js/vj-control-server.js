@@ -81,6 +81,11 @@ VjControlAPI = function() {
 		coldSwitch.setSwitchState(data.cold);
 	};
 
+	self.initSequence = function() {
+		console.log("Starting init sequence")
+		configSocket.emit('initSequence');
+	};
+
 	return self;
 };
 
@@ -247,10 +252,7 @@ watersplasherSwitch = new UiSwitch('input#watersplasher-state', vjAPI.setWatersp
 heatSwitch = new UiSwitch('input#heat-state', vjAPI.setHeat);
 coldSwitch = new UiSwitch('input#cold-state', vjAPI.setCold);
 watersplasherIntensitySlider = new WatersplasherUiSlider('input#watersplasher-intensity-slider', configAPI.setWatersplasherIntensity);
-
-initSequence = function () {
-	configSocket.emit('initSequence');
-};
+$('#button-init-sequence').click(vjAPI.initSequence);
 
 // For the time now
 Date.prototype.timeNow = function () {
