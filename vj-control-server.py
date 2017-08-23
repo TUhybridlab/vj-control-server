@@ -113,6 +113,11 @@ def broadcast_event():
 
 
 ## Events
+# Debug
+@socketio.on('connect', namespace='/events')
+def client_connected():
+	logging.debug('Client connected to events')
+
 # Section of the Jump
 @socketio.on('unityReadyEvent', namespace='/events')
 def unity_ready(message):
