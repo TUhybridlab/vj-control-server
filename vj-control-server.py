@@ -27,8 +27,8 @@ MAX_WATERSPLASHER_DURATION = 10
 ## REST API URLs
 BASE_URL = "/"
 ENVIRONMENT_URL = BASE_URL + "environment/"
+CONFIG_URL = BASE_URL + "config/"
 PARACHUTE_URL = BASE_URL + "parachute/"
-WATERSPLASHER_URL = BASE_URL + "watersplasher/"
 EVENT_URL = BASE_URL + "events/"
 JUMP_STATE_URL = BASE_URL + "jumpState/"
 
@@ -37,13 +37,16 @@ SERIAL_NAME = "/dev/ttyUSB"
 
 
 EnvState = recordclass(
-	'EnvState', ['duty_cycle', 'parachute_state', 'watersplasher_state', 'watersplasher_intensity'])
+	'EnvState', ['duty_cycle', 'parachute_state', 'watersplasher_state'])
+Config = recordclass(
+	'Config', ['watersplasher_intensity'])
 JumpState = recordclass(
 	'JumpState', ['jump_started', 'start_time'])
 
 
 ## Global variables
-envState = EnvState(0, False, False, WATERSPLASHER_DUTY_CYCLE)
+envState = EnvState(0, False, False)
+config = Config(WATERSPLASHER_DUTY_CYCLE)
 jumpState = JumpState(False, None)
 serial = None
 activeWaterStopThread = 0
@@ -69,16 +72,14 @@ def static_proxy(path):
 def get_environment():
 	return jsonify(envState.__dict__), 200
 
+@app.route(CONFIG_URL, methods=['GET'])
+def get_config():
+	return jsonify(config.__dict__), 200
 
 @app.route(PARACHUTE_URL, methods=['GET'])
 def get_parachute_state():
 	return jsonify({'parachute': envState.parachute_state}), 200
 
-@app.route(WATERSPLASHER_URL, methods=['GET'])
-def get_watersplasher_state():
-	return jsonify({
-		'intensity': envState.watersplasher_intensity
-	}), 200
 
 @app.route(JUMP_STATE_URL, methods=['GET'])
 def get_jump_state():
@@ -148,6 +149,9 @@ def unity_watersplasher(message):
 		watersplasher_off()
 
 # Config
+def config_changed():
+	socketio.emit('update', envState.__dict__, namespace='/config', broadcast=True)
+
 @socketio.on('initSequence', namespace='/config')
 def init_sequnce(_ = None):
 	set_fanspeed(16)
@@ -159,7 +163,8 @@ def init_sequnce(_ = None):
 @socketio.on('waterSplasherDutyCycle', namespace='/config')
 def set_watersplasher_duty_cycle(duty_cycle):
 	logging.info("Setting watersplasher to " + duty_cycle)
-	envState.watersplasher_intensity = float(duty_cycle)
+	config.watersplasher_intensity = float(duty_cycle)
+	config_changed()
 
 ## Helpers
 # Setter for fan speed
@@ -203,7 +208,7 @@ def watersplasher_on(duration = MAX_WATERSPLASHER_DURATION):
 
 	logging.debug("Watersplasher on")
 
-	socketio.start_background_task(watersplasher_task, envState.watersplasher_intensity)
+	socketio.start_background_task(watersplasher_task, config.watersplasher_intensity)
 
 	activeWaterStopThread += 1
 	socketio.start_background_task(stop_watersplasher_task, activeWaterStopThread, duration)

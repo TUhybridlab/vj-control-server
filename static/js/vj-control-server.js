@@ -1,6 +1,6 @@
 ENVIRONMENT_URL="/environment/";
+CONFIG_URL = "/config/";
 PARACHUTE_URL="/parachute/";
-WATERSPLASHER_URL = "/watersplasher/";
 EVENT_URL="/events/";
 JUMP_STATE_URL="/jumpState/";
 
@@ -109,20 +109,6 @@ WatersplasherUiSlider = function(id, onValueChanged) {
 	self.slider = $(id);
 	self.onValueChanged = onValueChanged;
 
-	self.initSlider = function () {
-		console.log("Initializing");
-		ajax_json(WATERSPLASHER_URL, "GET", null, false, do_nothing, do_nothing).done(function(data) {
-			// Initilaize slider with value
-			console.log("Setting slider to " + data.intensity);
-			self.setSlider(data.intensity);
-
-			// Set speed with slider
-			self.slider.change(function(event) {
-				self.onValueChanged(event.target.value);
-			});
-		});
-	};
-
 	self.setSlider = function(speed) {
 		return self.slider.val(speed);
 	};
@@ -130,6 +116,10 @@ WatersplasherUiSlider = function(id, onValueChanged) {
 	self.off = function () {
 		self.setSlider(0).change();
     };
+
+	self.slider.change(function(event) {
+		self.onValueChanged(event.target.value);
+	});
 
 	return self;
 };
@@ -194,29 +184,47 @@ EventSocket = function(){
 	return ret;
 };
 
+
+
+ConfigAPI = function () {
+	var self = this;
+
+	self.setWatersplasherIntensity = function(intensity) {
+		log('[DEBUG] Setting watersplasher intensity to ' + intensity);
+		configSocket.emit('waterSplasherDutyCycle', intensity);
+	};
+
+	self.getConfig = function () {
+		ajax_json(CONFIG_URL, "GET", null, true, self.applyConfig);
+    };
+
+	self.applyConfig = function (data) {
+		watersplasherIntensitySlider.setSlider(data.watersplasher_intensity);
+    };
+
+	return self;
+};
+
 ConfigSocket = function () {
 	var ret = io.connect('http://' + document.domain + ':' + location.port + '/config');
 
-	ret.on('connect', function(msg) {
-		watersplasherIntensitySlider.initSlider();
-	});
+	ret.on('connect', configAPI.getConfig);
 
-	ret.setWatersplasherIntensity = function(intensity) {
-		log('[DEBUG] Setting watersplasher intensity to ' + intensity);
-		ret.emit('waterSplasherDutyCycle', intensity);
-	};
+	ret.on('update', configAPI.getConfig);
 
 	return ret;
 };
 
 vjAPI = VjControlAPI();
+configAPI = ConfigAPI();
+
 eventSocket = EventSocket(vjAPI);
 configSocket = ConfigSocket();
 
 serverConnectedStateSwitch = new UiSwitch('input#server-connection-state', do_nothing);
 fanSlider = UiSlider('input#fan-slider', vjAPI.setFanSpeed);
 watersplasherSwitch = new UiSwitch('input#watersplasher-state', vjAPI.setWatersplasher);
-watersplasherIntensitySlider = new WatersplasherUiSlider('input#watersplasher-intensity-slider', configSocket.setWatersplasherIntensity);
+watersplasherIntensitySlider = new WatersplasherUiSlider('input#watersplasher-intensity-slider', configAPI.setWatersplasherIntensity);
 
 initSequence = function () {
 	configSocket.emit('initSequence');
