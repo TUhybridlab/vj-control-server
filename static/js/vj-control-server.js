@@ -1,4 +1,4 @@
-FAN_URL="/fan/";
+ENVIRONMENT_URL="/environment/";
 PARACHUTE_URL="/parachute/";
 WATERSPLASHER_URL = "/watersplasher/";
 EVENT_URL="/events/";
@@ -53,12 +53,14 @@ VjControlAPI = function() {
 			eventSocket.emit('unityWaterSplasherEvent', '0');
 	};
 
-	self.getFanSpeed = function() {
-		ajax_json(FAN_URL, "GET", null, true, function(data) { fanSlider.setSlider(data.speed); });
-	};
+	self.getEnvironmentState = function () {
+		ajax_json(ENVIRONMENT_URL, "GET", null, true, self.applyEnvironment);
+    };
 
-	self.getWatersplasherState = function() {
-		ajax_json(WATERSPLASHER_URL, "GET", null, true, function(data) { watersplasherSwitch.setSwitchState(data.watersplasher); });
+	self.applyEnvironment = function(data) {
+		console.log("Applying"); console.log(data);
+		fanSlider.setSlider(data.duty_cycle);
+		watersplasherSwitch.setSwitchState(data.watersplasher_state);
 	};
 
 	return self;
@@ -85,18 +87,6 @@ UiSlider = function(id, onValueChanged) {
 	self.id = id;
 	self.slider = $(id);
 
-	self.initSlider = function () {
-		ajax_json(FAN_URL, "GET", null, false, do_nothing, do_nothing).done(function(data) {
-			// Initilaize slider with value
-			self.setSlider(data.speed);
-
-			// Set speed with slider
-			self.slider.change(function(event) {
-				onValueChanged(event.target.value);
-			});
-		});
-	};
-
 	self.setSlider = function(speed) {
 		$("#slider_value").text("Level " + speed);
 		return self.slider.val(speed);
@@ -105,6 +95,10 @@ UiSlider = function(id, onValueChanged) {
 	self.off = function () {
 		self.setSlider(0).change();
     };
+
+	self.slider.change(function(event) {
+		onValueChanged(event.target.value);
+	});
 
 	return self;
 };
@@ -149,8 +143,7 @@ EventSocket = function(){
 	ret.on('connect', function(msg) {
 		log('[INFO] Socket connected.');
 		serverConnectedStateSwitch.setSwitchState(true);
-		fanSlider.initSlider();
-		vjAPI.getWatersplasherState();
+		vjAPI.getEnvironmentState();
 	});
 
 	ret.on('disconnect', function(msg) {
@@ -158,26 +151,9 @@ EventSocket = function(){
 		serverConnectedStateSwitch.setSwitchState(false);
 	});
 
-	// Receive fan event from server
-	ret.on('raspiFanEvent', function(msg) {
-		fanSlider.setSlider(msg);
-		if (self.previousFanSpeed !== msg) {
-			log('[DEBUG] Set fan slider to ' + msg);
-			self.previousFanSpeed = msg;
-		}
-	});
-
-	// Watersplasher switched on
-	ret.on('raspiWaterSplasherOnEvent', function(msg) {
-		log('[DEBUG] Watersplasher: On');
-		watersplasherSwitch.setSwitchState(true);
-	});
-
-	// Watersplasher switched off
-	ret.on('raspiWaterSplasherOffEvent', function(msg) {
-		log('[DEBUG] Watersplasher: Off');
-		watersplasherSwitch.setSwitchState(false);
-	});
+	ret.on('update', function (msg) {
+		vjAPI.applyEnvironment(msg);
+    });
 
 	// Parachute opened
 	ret.on('raspiParachuteOpenEvent', function(msg) {

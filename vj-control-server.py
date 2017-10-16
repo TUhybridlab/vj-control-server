@@ -26,7 +26,7 @@ MAX_WATERSPLASHER_DURATION = 10
 
 ## REST API URLs
 BASE_URL = "/"
-FAN_URL = BASE_URL + "fan/"
+ENVIRONMENT_URL = BASE_URL + "environment/"
 PARACHUTE_URL = BASE_URL + "parachute/"
 WATERSPLASHER_URL = BASE_URL + "watersplasher/"
 EVENT_URL = BASE_URL + "events/"
@@ -65,21 +65,10 @@ def static_proxy(path):
 	return send_from_directory('static/', path)
 
 ## REST API
-@app.route(FAN_URL + '<int:speed>', methods=['PUT', 'GET'])
-def set_fan_speed(speed):
-	set_fanspeed(speed)
+@app.route(ENVIRONMENT_URL, methods=['GET'])
+def get_environment():
+	return jsonify(envState.__dict__), 200
 
-	return jsonify({'error': 0}), 200
-
-@app.route(FAN_URL, methods=['POST'])
-def set_fan_speed_post():
-	set_fanspeed(request.form['speed'])
-
-	return jsonify({'error': 0}), 200
-
-@app.route(FAN_URL, methods=['GET'])
-def get_fan_speed():
-	return jsonify({'speed': envState.duty_cycle}), 200
 
 @app.route(PARACHUTE_URL, methods=['GET'])
 def get_parachute_state():
@@ -88,7 +77,6 @@ def get_parachute_state():
 @app.route(WATERSPLASHER_URL, methods=['GET'])
 def get_watersplasher_state():
 	return jsonify({
-		'watersplasher': envState.watersplasher_state,
 		'intensity': envState.watersplasher_intensity
 	}), 200
 
@@ -143,6 +131,9 @@ def unity_reset(message):
 	reset_start_trigger()
 
 # Enivronment control
+def environment_changed():
+	socketio.emit('update', envState.__dict__, namespace='/events', broadcast=True)
+
 @socketio.on('unityFanSpeedEvent', namespace='/events')
 def unity_fanspeed(message):
 	logging.info("Got fanspeed: %s", message)
@@ -159,11 +150,11 @@ def unity_watersplasher(message):
 # Config
 @socketio.on('initSequence', namespace='/config')
 def init_sequnce(_ = None):
-	set_fan_speed(16)
+	set_fanspeed(16)
 	socketio.sleep(5)
 	watersplasher_on(5)
 	socketio.sleep(5)
-	set_fan_speed(0)
+	set_fanspeed(0)
 
 @socketio.on('waterSplasherDutyCycle', namespace='/config')
 def set_watersplasher_duty_cycle(duty_cycle):
@@ -179,8 +170,7 @@ def set_fanspeed(speed):
 	envState.duty_cycle = min(max(speed, 0), 16)
 	serial.send_serial_command('F', envState.duty_cycle)
 
-	# TODO Remove when working
-	socketio.emit('raspiFanEvent', speed, namespace="/events")
+	environment_changed()
 
 # Setter for parachute state
 def open_parachute():
@@ -219,11 +209,10 @@ def watersplasher_on(duration = MAX_WATERSPLASHER_DURATION):
 	socketio.start_background_task(stop_watersplasher_task, activeWaterStopThread, duration)
 	logging.info("Starting stopper thread: %s", activeWaterStopThread)
 
-	socketio.emit('raspiWaterSplasherOnEvent', None, namespace="/events")
-
 def watersplasher_task(duty_cycle = WATERSPLASHER_DUTY_CYCLE):
 	if not envState.watersplasher_state:
 		envState.watersplasher_state = True
+		environment_changed()
 		while envState.watersplasher_state:
 			serial.send_serial_command('W', 16)
 			socketio.sleep(duty_cycle)
@@ -237,7 +226,7 @@ def watersplasher_off():
 	logging.debug("Watersplasher off")
 
 	envState.watersplasher_state = False
-	socketio.emit('raspiWaterSplasherOffEvent', None, namespace="/events")
+	environment_changed()
 
 # Setter for start trigger
 def trigger_start():
