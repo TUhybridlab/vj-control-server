@@ -7,7 +7,9 @@ import serial.tools.list_ports
 
 COMMAND_TO_CHANNEL = {
 	'F': 0x00,
-	'W': 0x01
+	'W': 0x01,
+	'H': 0x02,
+	'C': 0x03
 }
 
 

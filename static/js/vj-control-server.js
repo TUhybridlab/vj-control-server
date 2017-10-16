@@ -53,6 +53,22 @@ VjControlAPI = function() {
 			eventSocket.emit('unityWaterSplasherEvent', '0');
 	};
 
+	self.setHeat = function(state) {
+		console.log('Heat: ' + state)
+		if (state)
+			eventSocket.emit('unityHeatEvent', '1');
+		else
+			eventSocket.emit('unityHeatEvent', '0');
+	};
+
+	self.setCold = function(state) {
+		console.log('Cold: ' + state)
+		if (state)
+			eventSocket.emit('unityColdEvent', '1');
+		else
+			eventSocket.emit('unityColdEvent', '0');
+	};
+
 	self.getEnvironmentState = function () {
 		ajax_json(ENVIRONMENT_URL, "GET", null, true, self.applyEnvironment);
     };
@@ -61,6 +77,8 @@ VjControlAPI = function() {
 		console.log("Applying"); console.log(data);
 		fanSlider.setSlider(data.duty_cycle);
 		watersplasherSwitch.setSwitchState(data.watersplasher_state);
+		heatSwitch.setSwitchState(data.heat);
+		coldSwitch.setSwitchState(data.cold);
 	};
 
 	return self;
@@ -224,6 +242,8 @@ configSocket = ConfigSocket();
 serverConnectedStateSwitch = new UiSwitch('input#server-connection-state', do_nothing);
 fanSlider = UiSlider('input#fan-slider', vjAPI.setFanSpeed);
 watersplasherSwitch = new UiSwitch('input#watersplasher-state', vjAPI.setWatersplasher);
+heatSwitch = new UiSwitch('input#heat-state', vjAPI.setHeat);
+coldSwitch = new UiSwitch('input#cold-state', vjAPI.setCold);
 watersplasherIntensitySlider = new WatersplasherUiSlider('input#watersplasher-intensity-slider', configAPI.setWatersplasherIntensity);
 
 initSequence = function () {

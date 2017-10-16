@@ -37,7 +37,7 @@ SERIAL_NAME = "/dev/ttyUSB"
 
 
 EnvState = recordclass(
-	'EnvState', ['duty_cycle', 'parachute_state', 'watersplasher_state'])
+	'EnvState', ['duty_cycle', 'parachute_state', 'watersplasher_state', 'heat', 'cold'])
 Config = recordclass(
 	'Config', ['watersplasher_intensity'])
 JumpState = recordclass(
@@ -45,7 +45,7 @@ JumpState = recordclass(
 
 
 ## Global variables
-envState = EnvState(0, False, False)
+envState = EnvState(0, False, False, False, False)
 config = Config(WATERSPLASHER_DUTY_CYCLE)
 jumpState = JumpState(False, None)
 serial = None
@@ -148,6 +148,22 @@ def unity_watersplasher(message):
 	else:
 		watersplasher_off()
 
+@socketio.on('unityHeatEvent', namespace='/events')
+def unity_heat(message):
+	logging.info("Got heat:  %s", message)
+	if int(message) == 1:
+		heat_on()
+	else:
+		heat_off()
+
+@socketio.on('unityColdEvent', namespace='/events')
+def unity_cold(message):
+	logging.info("Got cold:  %s", message)
+	if int(message) == 1:
+		cold_on()
+	else:
+		cold_off()
+
 # Config
 def config_changed():
 	socketio.emit('update', envState.__dict__, namespace='/config', broadcast=True)
@@ -231,6 +247,31 @@ def watersplasher_off():
 	logging.debug("Watersplasher off")
 
 	envState.watersplasher_state = False
+	environment_changed()
+
+# Setter for heat
+def heat_on():
+	logging.debug("Heat on")
+	envState.heat = True
+	serial.send_serial_command('H', 16)
+	environment_changed()
+
+def heat_off():
+	logging.debug("Heat off")
+	envState.heat = False
+	serial.send_serial_command('H', 0)
+	environment_changed()
+
+def cold_on():
+	logging.debug("Cold on")
+	envState.cold = True
+	serial.send_serial_command('C', 16)
+	environment_changed()
+
+def cold_off():
+	logging.debug("Cold off")
+	envState.cold = False
+	serial.send_serial_command('C', 0)
 	environment_changed()
 
 # Setter for start trigger
