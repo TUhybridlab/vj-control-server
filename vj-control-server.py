@@ -166,7 +166,7 @@ def unity_cold(message):
 
 # Config
 def config_changed():
-	socketio.emit('update', envState.__dict__, namespace='/config', broadcast=True)
+	socketio.emit('update', config.__dict__, namespace='/config', broadcast=True)
 
 @socketio.on('initSequence', namespace='/config')
 def init_sequnce(_ = None):

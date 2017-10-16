@@ -228,7 +228,9 @@ ConfigSocket = function () {
 
 	ret.on('connect', configAPI.getConfig);
 
-	ret.on('update', configAPI.getConfig);
+	ret.on('update',  function (msg) {
+		configAPI.applyConfig(msg);
+    });
 
 	return ret;
 };
