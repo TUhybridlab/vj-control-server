@@ -73,7 +73,7 @@ class SerialPort(object):
 	def get_serial_port_device(self):
 		ports = serial.tools.list_ports.grep(self.port_name)
 		try:
-			return ports.next().device
+			return next(ports).device
 		except StopIteration:
 			return None
 
@@ -83,6 +83,8 @@ class SerialPort(object):
 
 	@staticmethod
 	def bin2int(value):
+		if isinstance(value, int):
+			return value
 		return struct.unpack('!B', value)[0]
 
 	def close(self):
