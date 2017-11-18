@@ -169,7 +169,7 @@ def config_changed():
 	socketio.emit('update', config.__dict__, namespace='/config', broadcast=True)
 
 @socketio.on('initSequence', namespace='/config')
-def init_sequnce(_ = None):
+def init_sequnce(_=None):
 	set_fanspeed(16)
 	socketio.sleep(5)
 	tmp = config.watersplasher_intensity
@@ -213,17 +213,17 @@ def close_parachute():
 	socketio.emit('raspiParachuteCloseEvent', None, namespace="/events")
 
 # Setter for Watersplasher
-def stop_watersplasher_task(threadId, duration):
+def stop_watersplasher_task(thread_id, duration):
 	global activeWaterStopThread
 
 	socketio.sleep(duration)
-	if activeWaterStopThread == threadId:
+	if activeWaterStopThread == thread_id:
 		watersplasher_off()
 		activeWaterStopThread = 0
 	else:
 		logging.info("Not closing, active one is %s", activeWaterStopThread)
 
-def watersplasher_on(duration = MAX_WATERSPLASHER_DURATION):
+def watersplasher_on(duration=MAX_WATERSPLASHER_DURATION):
 	global activeWaterStopThread
 
 	logging.debug("Watersplasher on")
@@ -234,7 +234,7 @@ def watersplasher_on(duration = MAX_WATERSPLASHER_DURATION):
 	socketio.start_background_task(stop_watersplasher_task, activeWaterStopThread, duration)
 	logging.info("Starting stopper thread: %s", activeWaterStopThread)
 
-def watersplasher_task(duty_cycle = WATERSPLASHER_DUTY_CYCLE):
+def watersplasher_task(duty_cycle=WATERSPLASHER_DUTY_CYCLE):
 	if not envState.watersplasher_state:
 		envState.watersplasher_state = True
 		environment_changed()
@@ -289,15 +289,6 @@ def reset_start_trigger():
 	jumpState.jump_started = False
 
 
-# RasPi GPIO button callbacks
-def ready_button_event_handler(pin):
-	socketio.emit('raspiPlayerReadyEvent', 'Player is ready to go', namespace="/events")
-
-def start_button_event_handler(pin):
-	socketio.emit('raspiStartJumpEvent', 'Jump Started', namespace="/events")
-	socketio.emit('serverEvent', {'data': 'Jump Started'}, namespace="/events")
-
-
 ## Shutdown signal handler
 def sigTermHandler(signum, frame):
 	raise KeyboardInterrupt('Signal %i receivied!' % signum)
@@ -308,7 +299,7 @@ def main():
 	global serial
 
 	# Set locale for Flask
-	#locale.setlocale(locale.LC_ALL, '')
+	# locale.setlocale(locale.LC_ALL, '')
 
 	## Initialize logger
 	logging.config.fileConfig('log.ini')
@@ -332,6 +323,7 @@ def main():
 		pass
 	finally:
 		serial.close()
+
 
 if __name__ == '__main__':
 	main()
