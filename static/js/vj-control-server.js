@@ -6,13 +6,12 @@ JUMP_STATE_URL="/jumpState/";
 
 do_nothing = function() {};
 
-default_error = function (jqXHR) {
-			console.log("ajax error " + jqXHR.status);
+log = function(msg) {
+	console.log(msg);
 };
 
-log = function(msg) {
-	var time = new Date().timeNow();
-	$('#log').prepend('<p>'+ time + ' - '+ msg + '</p>');
+default_error = function (jqXHR) {
+	log("ajax error " + jqXHR.status);
 };
 
 ajax_json = function(uri, method, request_data, is_async, success_callback) {
@@ -133,6 +132,7 @@ WatersplasherUiSlider = function(id, onValueChanged) {
 	self.onValueChanged = onValueChanged;
 
 	self.setSlider = function(speed) {
+		$("#watersplasher-intensity").text("Intensity " + speed);
 		return self.slider.val(speed);
 	};
 
@@ -155,13 +155,11 @@ EventSocket = function(){
 
 	ret.on('connect', function(msg) {
 		log('[INFO] Socket connected.');
-		serverConnectedStateSwitch.setSwitchState(true);
 		vjAPI.getEnvironmentState();
 	});
 
 	ret.on('disconnect', function(msg) {
 		log('[ERROR] Socket disconnected!');
-		serverConnectedStateSwitch.setSwitchState(false);
 	});
 
 	ret.on('update', function (msg) {
@@ -246,7 +244,6 @@ configAPI = ConfigAPI();
 eventSocket = EventSocket(vjAPI);
 configSocket = ConfigSocket();
 
-serverConnectedStateSwitch = new UiSwitch('input#server-connection-state', do_nothing);
 fanSlider = UiSlider('input#fan-slider', vjAPI.setFanSpeed);
 watersplasherSwitch = new UiSwitch('input#watersplasher-state', vjAPI.setWatersplasher);
 heatSwitch = new UiSwitch('input#heat-state', vjAPI.setHeat);
