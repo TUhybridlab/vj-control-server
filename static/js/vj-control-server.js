@@ -75,7 +75,7 @@ VjControlAPI = function() {
 
 	self.applyEnvironment = function(data) {
 		console.log("Applying"); console.log(data);
-		fanSlider.setSlider(data.duty_cycle);
+		fanSlider.setSlider(data.fan_level);
 		watersplasherSwitch.setSwitchState(data.watersplasher_state);
 		heatSwitch.setSwitchState(data.heat);
 		coldSwitch.setSwitchState(data.cold);

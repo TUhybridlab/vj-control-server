@@ -37,7 +37,7 @@ SERIAL_NAME = "/dev/ttyUSB"
 
 
 EnvState = recordclass(
-	'EnvState', ['duty_cycle', 'parachute_state', 'watersplasher_state', 'heat', 'cold'])
+	'EnvState', ['fan_level', 'watersplasher_state', 'heat', 'cold'])
 Config = recordclass(
 	'Config', ['watersplasher_intensity'])
 JumpState = recordclass(
@@ -45,7 +45,7 @@ JumpState = recordclass(
 
 
 ## Global variables
-envState = EnvState(0, False, False, False, False)
+envState = EnvState(0, False, False, False)
 config = Config(WATERSPLASHER_DUTY_CYCLE)
 jumpState = JumpState(False, None)
 serial = None
@@ -192,8 +192,8 @@ def set_fanspeed(speed):
 	logging.debug("Setting fanspeed to %s", speed)
 
 	# Set PWM-DutyCycle of pin
-	envState.duty_cycle = min(max(speed, 0), 16)
-	serial.send_serial_command('F', envState.duty_cycle)
+	envState.fan_level = min(max(speed, 0), 16)
+	serial.send_serial_command('F', envState.fan_level)
 
 	environment_changed()
 
