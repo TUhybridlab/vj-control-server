@@ -76,11 +76,6 @@ def get_environment():
 def get_config():
 	return jsonify(config.__dict__), 200
 
-@app.route(PARACHUTE_URL, methods=['GET'])
-def get_parachute_state():
-	return jsonify({'parachute': envState.parachute_state}), 200
-
-
 @app.route(JUMP_STATE_URL, methods=['GET'])
 def get_jump_state():
 	return jsonify({'jumpStarted': jumpState.jump_started}), 200
@@ -202,14 +197,12 @@ def open_parachute():
 	logging.debug("Open parachute")
 
 	serial.send_serial_command('P', 1)
-	envState.parachute_state = True
 	socketio.emit('raspiParachuteOpenEvent', None, namespace="/events")
 
 def close_parachute():
 	logging.debug("Close parachute")
 
 	serial.send_serial_command('P', 0)
-	envState.parachute_state = False
 	socketio.emit('raspiParachuteCloseEvent', None, namespace="/events")
 
 # Setter for Watersplasher
