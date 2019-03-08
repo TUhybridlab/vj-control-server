@@ -22,9 +22,9 @@ I recommend using `pip` and `virtualenv`. One way to do so is:
 1. Download PyCharm (https://www.jetbrains.com/pycharm/download/) - Community Edition is sufficient
 1. Open this repository
 1. Set interpreter to Python2.7
-1.1. Go to "File" -> "Settings"
-1.1. Search for "Interpreter"
-1.1. Set to Python 2.7
+    1. Go to "File" -> "Settings"
+    1. Search for "Interpreter"
+    1. Set to Python 2.7
 1. Open `vj-control-server.py`
 1. PyCharm should now display that some requirements are missing -> click "Install requirements"
 
