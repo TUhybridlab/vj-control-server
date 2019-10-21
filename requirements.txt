@@ -4,7 +4,7 @@
   gevent
 
 # Custom dependecies
-  python-engineio==2.2.0
+  python-engineio==3.8.2.post1
   flask-socketio==3.0.1
   gevent-websocket==0.10.1
   recordclass==0.4.3
